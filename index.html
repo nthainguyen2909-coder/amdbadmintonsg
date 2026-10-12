@@ -162,9 +162,12 @@
     /* group match: a touch smaller so pair names have room on one line */
     .matchGrid input{width:46px;height:38px;font-size:17px}
     .mgName{font-size:12.5px;min-width:0}
-    /* knockout bracket on phones: stack the NAME on top and score boxes BELOW so names never
-       collide with the scores, and let long names wrap fully */
-    .round{min-width:156px;gap:16px}
+    /* knockout bracket on phones: wrap the match boxes instead of scrolling sideways.
+       Each round becomes a labeled section; boxes flow to fit the screen. */
+    .bracketWrap{display:block;overflow-x:visible;padding:8px 2px 16px}
+    .round{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;min-width:0;width:100%;margin-bottom:18px}
+    .round .rhd{grid-column:1/-1;text-align:left;font-size:13px;margin-bottom:2px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+    /* stack the NAME on top and score boxes BELOW so names never collide with scores */
     .tie .slot{flex-direction:column;align-items:stretch;gap:5px;padding:7px 8px}
     .tie .slot .nm{font-size:12.5px !important;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
     .tie .slot .slotSel{font-size:11.5px;padding:4px;width:100%}
