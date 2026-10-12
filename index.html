@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Badminton Tournament Manager</title>
+<title>AMD Badminton Carnival 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,20 +21,32 @@
   *{box-sizing:border-box}
   body{margin:0;font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;-webkit-font-smoothing:antialiased;font-feature-settings:"cv05","tnum"}
   h1,.catTitle,.sectionHd,.round .rhd,.lgTitle,.tab,.group h3,.tie .champ,.champBanner{font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif}
-  header{position:sticky;top:0;z-index:20;background:#ffffff;border-bottom:1px solid var(--line);box-shadow:0 1px 3px rgba(16,24,40,.05);padding:12px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  header h1{font-size:18px;margin:0;font-weight:800;letter-spacing:-.2px;color:var(--txt)}
-  header .sub{color:var(--muted);font-size:12px}
+  header{position:sticky;top:0;z-index:20;background:linear-gradient(100deg,#07241f 0%,#0f766e 58%,#14968c 100%);border-bottom:3px solid #06302a;box-shadow:0 3px 16px rgba(7,36,31,.28);padding:13px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;color:#fff}
+  .amdLogo{display:inline-flex;align-items:center;gap:6px;background:#000;color:#fff;padding:8px 13px;border-radius:9px;box-shadow:0 2px 10px rgba(0,0,0,.4);flex:none}
+  .amdLogo .amdTxt{font-weight:900;font-size:22px;letter-spacing:-1px;font-family:'Arial Black','Plus Jakarta Sans',Arial,sans-serif;line-height:1}
+  .amdArrow{height:19px;width:19px;fill:#fff;display:block}
+  /* per-category accent theming (changes with the active tab) */
+  body[data-cat="mens"]  header{background:linear-gradient(100deg,#07241f,#0f766e,#14968c)}
+  body[data-cat="mixed"]{--accent:#b4530a}
+  body[data-cat="mixed"] header{background:linear-gradient(100deg,#3a1d02,#b4530a,#d9892b)}
+  body[data-cat="mixed"] .tab.active{color:#b4530a}
+  body[data-cat="women"]{--accent:#be185d}
+  body[data-cat="women"] header{background:linear-gradient(100deg,#3a0820,#be185d,#e0629a)}
+  body[data-cat="women"] .tab.active{color:#be185d}
+  header h1{font-size:21px;margin:0;font-weight:800;letter-spacing:.6px;color:#fff;line-height:1.12;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+  header h1 .yr{color:#ffd24a}
+  header .sub{color:#c9efe9;font-size:12px;letter-spacing:.2px;margin-top:3px}
   .tabs{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
-  .tab{padding:7px 15px;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:9px;cursor:pointer;font-weight:600;font-size:13px}
-  .tab:hover{border-color:var(--accent);color:var(--accent)}
-  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tab{padding:7px 15px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#eafaf6;border-radius:9px;cursor:pointer;font-weight:600;font-size:13px}
+  .tab:hover{border-color:#fff;color:#fff;background:rgba(255,255,255,.22)}
+  .tab.active{background:#fff;color:#0f766e;border-color:#fff}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .btn{padding:7px 13px;border:1px solid var(--line);background:#fff;color:var(--txt);border-radius:8px;cursor:pointer;font-size:12.5px;font-weight:600}
   .btn:hover{border-color:var(--accent);color:var(--accent)}
   .btn.warn{border-color:#f0cfca;color:var(--danger)}
   .btn.warn:hover{border-color:var(--danger)}
   main{padding:16px;max-width:1500px;margin:0 auto}
-  .catTitle{font-size:19px;font-weight:800;margin:6px 0 2px;color:var(--txt);letter-spacing:-.3px}
+  .catTitle{font-size:19px;font-weight:800;margin:6px 0 2px;color:var(--accent);letter-spacing:-.3px}
   .catMeta{color:var(--muted);font-size:12.5px;margin-bottom:12px}
   .sectionHd{font-size:15px;font-weight:700;color:var(--txt);margin:26px 0 12px;border-bottom:2px solid var(--line);padding-bottom:8px}
   .groupGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px}
@@ -117,29 +129,54 @@
   .flash{position:fixed;bottom:18px;right:18px;background:var(--accent2);color:#fff;padding:9px 16px;border-radius:9px;font-weight:700;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;box-shadow:0 6px 20px rgba(16,24,40,.18)}
   .flash.show{opacity:1}
   /* read-only / live view mode */
-  .liveBadge{display:none;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--accent);background:var(--focus);border:1px solid #bfe3dc;border-radius:20px;padding:5px 13px}
+  .liveBadge{display:none;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);border-radius:20px;padding:5px 13px}
   .liveBadge .dot{width:8px;height:8px;border-radius:50%;background:#15803d;box-shadow:0 0 0 0 rgba(21,128,61,.6);animation:pulse 1.8s infinite}
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}70%{box-shadow:0 0 0 7px rgba(21,128,61,0)}100%{box-shadow:0 0 0 0 rgba(21,128,61,0)}}
   body.vo .toolbar{display:none}
   body.vo .liveBadge{display:inline-flex}
-  .lockWrap{display:none;align-items:center;gap:9px;font-size:12.5px;font-weight:700;color:var(--danger)}
+  .lockWrap{display:none;align-items:center;gap:9px;font-size:12.5px;font-weight:700;color:#ffe3de}
   body.locked .lockWrap{display:inline-flex}
   body.locked .liveBadge{display:none}
-  .lockWrap .unlockBtn{color:var(--accent);border-color:var(--accent)}
+  .lockWrap .unlockBtn{color:#0f766e;border-color:#fff;background:#fff}
   body.vo .pairEditor{display:none}
   body.vo input:disabled{background:transparent;border-color:transparent;box-shadow:none;color:var(--txt);opacity:1;-webkit-text-fill-color:var(--txt);padding-left:0;padding-right:0}
   body.vo input::placeholder{color:transparent;-webkit-text-fill-color:transparent}
   body.vo .matchMeta input:disabled,body.vo .koMeta input:disabled{font-weight:600;color:var(--muted);-webkit-text-fill-color:var(--muted)}
   body.vo .matchGrid input:disabled,body.vo .setBox input:disabled,body.vo .tie .slot input:disabled{text-align:center}
   @media(prefers-reduced-motion:reduce){.liveBadge .dot{animation:none}}
-  @media(max-width:560px){.groupGrid{grid-template-columns:1fr}.scoreCell{min-width:120px}}
+  @media(max-width:560px){
+    .groupGrid{grid-template-columns:1fr}
+    .scoreCell{min-width:120px}
+    main{padding:12px}
+    header{padding:11px 14px;gap:10px}
+    header h1{font-size:16px;letter-spacing:.3px}
+    header .sub{font-size:10.5px}
+    .amdLogo{padding:6px 9px;gap:4px}
+    .amdLogo .amdTxt{font-size:17px}
+    .amdArrow{height:15px;width:15px}
+    .tab{padding:6px 11px;font-size:12px}
+    /* standings: let the wide table scroll instead of squashing/overlapping names */
+    .group{overflow-x:auto}
+    .standings{min-width:420px}
+    .standings th,.standings td{padding:4px 4px;font-size:11.5px}
+    /* group match: a touch smaller so pair names have room on one line */
+    .matchGrid input{width:46px;height:38px;font-size:17px}
+    .mgName{font-size:12.5px;min-width:0}
+    /* knockout bracket: narrower rounds + smaller inputs so names don't collide with scores */
+    .round{min-width:188px;gap:12px}
+    .tie .slot{gap:5px;padding:6px}
+    .tie .slot input{width:32px;height:28px;font-size:14px}
+    .tie .slot .nm{font-size:11.5px}
+    .tie .slot .slotSel{font-size:11px;padding:3px}
+  }
 </style>
 </head>
 <body>
 <header>
+  <span class="amdLogo" title="AMD"><span class="amdTxt">AMD</span><svg class="amdArrow" viewBox="0 0 120 120" aria-hidden="true"><path d="M22 22 H98 V98 H60 L80 78 H42 V40 H22 Z"/></svg></span>
   <div>
-    <h1>🏸 Badminton Tournament Manager</h1>
-    <div class="sub">Round-robin → Knockout · live scoring &amp; auto-qualify</div>
+    <h1>🏸 AMD BADMINTON CARNIVAL <span class="yr">2026</span></h1>
+    <div class="sub">Men's · Mixed · Women's Doubles — Round-robin → Knockout · Live Scores</div>
   </div>
   <span class="liveBadge"><span class="dot"></span>LIVE · View only</span>
   <span class="lockWrap">🔒 Scoring locked <button class="btn unlockBtn" onclick="promptUnlock()">Unlock to score</button></span>
@@ -634,6 +671,7 @@ function propagate(catKey){
 
 /* ===================== RENDER ===================== */
 function render(){
+  document.body.setAttribute('data-cat', currentCat);   // drives the per-category accent color
   renderTabs();
   const v=document.getElementById('view');
   v.innerHTML="";
