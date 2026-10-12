@@ -200,7 +200,7 @@ const TOURNEY_ID = "main";   // change to run several separate tournaments on on
 const EDIT_PASSWORD = "amd2026";   // <-- change this to your own password
 
 const URLP = new URLSearchParams(location.search);
-const VIEW_ONLY = URLP.has("view");                 // ?view  =>  always read-only
+const VIEW_ONLY = URLP.has("view")||URLP.has("views")||URLP.has("v");  // ?view (or ?views/?v) => read-only
 let unlocked = VIEW_ONLY ? false : !EDIT_PASSWORD;  // scoring page starts locked if a password is set
 function readOnly(){ return VIEW_ONLY || !unlocked; }
 let fbRef=null, cloudReady=false, pushTimer=null;
