@@ -513,7 +513,9 @@ function qRefTeam(catKey, ref){
   if(!g) return {id:null,name:ref,ref};
   const st=standings(g), r=st[pos];
   if(!r) return {id:null,name:ref,ref};
-  return {id:r.id, name:(r.name&&r.name.trim())?r.name:ref, ref};
+  // show the group rank (e.g. "A2") until the pair actually has a name, then the name fills in
+  const named=(r.name&&r.name.trim()&&r.name!=="—");
+  return {id:r.id, name: named?r.name:ref, ref};
 }
 // Fixed custom draws for specific categories (exact matchups the committee wants).
 // "BYE"/"BYE" ties mean the winner of the adjacent tie rests one round (byes into the next round).
@@ -531,17 +533,18 @@ const CUSTOM_DRAWS = {
     {topRef:"D1", botRef:"A3"},
     {topRef:"BYE", botRef:"BYE"}
   ],
-  // Men's: 12 teams (6 groups) -> rotation A2vB1, B2vC1, ... with byes at ties 4 & 8.
-  //   Top half:  A2/B1 , B2/C1 , C2/D1 (byes into SF)
-  //   Bottom half: D2/E1 , E2/F1 , F2/A1 (byes into SF)
+  // Men's: 12 teams (6 groups) -> rotation A1vB2, B1vC2, ... (winner vs next group runner-up),
+  //   byes at ties 4 & 8.
+  //   Top half:  A1/B2 , B1/C2 , C1/D2 (byes into SF)
+  //   Bottom half: D1/E2 , E1/F2 , F1/A2 (byes into SF)
   mens: [
-    {topRef:"A2", botRef:"B1"},
-    {topRef:"B2", botRef:"C1"},
-    {topRef:"C2", botRef:"D1"},
+    {topRef:"A1", botRef:"B2"},
+    {topRef:"B1", botRef:"C2"},
+    {topRef:"C1", botRef:"D2"},
     {topRef:"BYE", botRef:"BYE"},
-    {topRef:"D2", botRef:"E1"},
-    {topRef:"E2", botRef:"F1"},
-    {topRef:"F2", botRef:"A1"},
+    {topRef:"D1", botRef:"E2"},
+    {topRef:"E1", botRef:"F2"},
+    {topRef:"F1", botRef:"A2"},
     {topRef:"BYE", botRef:"BYE"}
   ]
 };
@@ -587,7 +590,7 @@ function reseedKnockout(){
 // <select> options for a first-round slot: empty, BYE, then every qualifier (A1, A2, ... by group).
 function drawOptions(catKey, current){
   const cfg=CATS[catKey];
-  let html=`<option value=""${!current?" selected":""}>— pick —</option><option value="BYE"${current==="BYE"?" selected":""}>BYE</option>`;
+  let html=`<option value=""${!current?" selected":""}>— pick —</option><option value="BYE"${current==="BYE"?" selected":""}>Overcome</option>`;
   for(let gi=0; gi<cfg.groups; gi++){
     const letter=GROUP_LETTERS[gi], g=DB[catKey].groups[gi], st=standings(g);
     for(let pos=0;pos<cfg.qualifiersPerGroup;pos++){
@@ -933,7 +936,7 @@ function renderTie(catKey,ri,ti,tie,isFinal){
       slot.appendChild(sel);
     } else {
       const nm=document.createElement('div'); nm.className="nm";
-      if(isBye){ nm.textContent="(bye)"; }
+      if(isBye){ nm.textContent="(overcome)"; }
       else if(!p){ nm.innerHTML=`<span style="color:var(--muted)">— awaiting —</span>`; }
       else { nm.innerHTML=`${p.ref?`<span class="seedtag">${p.ref}</span>`:""}${escapeHtml(p.name||"?")}`; nm.style.fontSize=nameFontSize(p.name||"",12.5)+"px"; }
       slot.appendChild(nm);
