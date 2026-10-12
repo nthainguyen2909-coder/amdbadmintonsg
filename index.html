@@ -162,12 +162,14 @@
     /* group match: a touch smaller so pair names have room on one line */
     .matchGrid input{width:46px;height:38px;font-size:17px}
     .mgName{font-size:12.5px;min-width:0}
-    /* knockout bracket: narrower rounds + smaller inputs so names don't collide with scores */
-    .round{min-width:188px;gap:12px}
-    .tie .slot{gap:5px;padding:6px}
-    .tie .slot input{width:32px;height:28px;font-size:14px}
-    .tie .slot .nm{font-size:11.5px}
-    .tie .slot .slotSel{font-size:11px;padding:3px}
+    /* knockout bracket on phones: stack the NAME on top and score boxes BELOW so names never
+       collide with the scores, and let long names wrap fully */
+    .round{min-width:156px;gap:16px}
+    .tie .slot{flex-direction:column;align-items:stretch;gap:5px;padding:7px 8px}
+    .tie .slot .nm{font-size:12.5px !important;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+    .tie .slot .slotSel{font-size:11.5px;padding:4px;width:100%}
+    .tie .slot .setBox{justify-content:flex-start;gap:5px}
+    .tie .slot input{width:36px;height:32px;font-size:15px}
   }
 </style>
 </head>
