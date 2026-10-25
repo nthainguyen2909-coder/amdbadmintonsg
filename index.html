@@ -739,6 +739,7 @@ function render(){
   }
   // read-only view: lock every input so spectators can look but not change anything
   if(readOnly()){ v.querySelectorAll('input').forEach(i=>{ i.disabled=true; i.tabIndex=-1; }); }
+  fitMatchNames();   // size each match name as large as fits its box
 }
 
 function renderTabs(){
@@ -915,12 +916,24 @@ function updateStandingsTables(){
       if(grid.parentElement) markSetErrors(grid.parentElement, m);
     });
   });
+  fitMatchNames();   // re-fit names to their boxes after live name/score updates
 }
 // Shrink the font as a name gets longer so it fits on one line (no wrapping).
 function nameFontSize(text, base){ const L=(text||"").length;
   if(L>48) return base-5.5; if(L>40) return base-4.5; if(L>32) return base-3.5;
   if(L>26) return base-2.5; if(L>20) return base-1.5; if(L>16) return base-0.5; return base; }
 function setNameKeepBadge(el, text){ if(el.textContent!==text){ el.textContent=text; el.style.fontSize=nameFontSize(text,13.5)+"px"; } }
+// Grow the font as large as possible, then shrink only if the text actually overflows its box.
+function fitText(el, maxPx, minPx){
+  el.style.fontSize=maxPx+"px";
+  let fs=maxPx, guard=0;
+  while(fs>minPx && el.scrollWidth>el.clientWidth+1 && guard++<80){ fs-=0.5; el.style.fontSize=fs+"px"; }
+}
+// Make every group-match pair name as big as it can be without spilling out of its cell.
+function fitMatchNames(){
+  const els=document.querySelectorAll('#view .mgName');
+  els.forEach(el=>fitText(el, 20, 9));
+}
 
 function refreshKnockoutNames(){
   const cat=DB[currentCat]; if(!cat.knockout) return;
