@@ -208,7 +208,8 @@ const CATS = {
   mixed: {name:"Mixed Double",   groups:4, qualifiersPerGroup:3, knockout:"R16"}, // 4×top3 = 12 -> R16(+byes)->QF->SF->F
   women: {name:"Women's Double", groups:2, qualifiersPerGroup:2, knockout:"SF"}   // 2×top2 = 4  -> SF->F
 };
-const SETS = 3;               // best of 3
+const SETS = 3;               // knockout: best of 3 games to 21
+const GROUP_SETS = 1;         // round robin: a single game to 21
 const DEFAULT_PAIRS_PER_GROUP = {mens:4, mixed:5, women:4}; // starting slots (editable: add/remove)
 const GROUP_LETTERS = "ABCDEFGH";
 
@@ -263,7 +264,7 @@ function onCloudValue(snap){
     const s=snap.val();
     if(typeof s!=="string") return;        // ignore legacy/corrupted non-string data
     const d=JSON.parse(s);
-    if(d && d.mens){ DB=d; render(); }
+    if(d && d.mens){ DB=d; migrateGroupSets(); render(); }
   }catch(e){ console.warn("Could not read live data:", e); }
 }
 function applyCloudMode(){
@@ -289,7 +290,9 @@ function promptUnlock(){
   } else { alert("Wrong password — you can view only."); }
 }
 
-function blankMatch(a,b){ return {a,b,name:"",court:"",sets:Array.from({length:SETS},()=>[null,null])}; }
+function blankMatch(a,b){ return {a,b,name:"",court:"",sets:Array.from({length:GROUP_SETS},()=>[null,null])}; }
+// force a sets array to exactly n games (keep existing scores, pad/trim)
+function normSets(arr,n){ arr=(arr||[]).slice(0,n); while(arr.length<n) arr.push([null,null]); return arr; }
 
 function freshCat(key){
   const cfg = CATS[key];
@@ -313,7 +316,7 @@ function rebuildMatches(group){
   order.forEach(([a,b])=>{
     const m = blankMatch(a,b);
     const prev = old[a+"|"+b];
-    if(prev){ m.sets=prev.sets; m.name=prev.name||""; m.court=prev.court||""; }
+    if(prev){ m.sets=normSets(prev.sets,GROUP_SETS); m.name=prev.name||""; m.court=prev.court||""; }
     ms.push(m);
   });
   group.matches = ms;
@@ -348,7 +351,14 @@ function spreadSchedule(ids){
 function load(){
   try{ const raw=localStorage.getItem(LS_KEY); if(raw){DB=JSON.parse(raw);} }catch(e){}
   for(const k in CATS){ if(!DB[k]) DB[k]=freshCat(k); }
+  migrateGroupSets();
   save(true);
+}
+// Round robin is a single game: trim any older 3-game group matches down to GROUP_SETS.
+function migrateGroupSets(){
+  for(const k in CATS){
+    (DB[k]&&DB[k].groups||[]).forEach(g=> (g.matches||[]).forEach(m=>{ m.sets=normSets(m.sets,GROUP_SETS); }));
+  }
 }
 let saveTimer=null;
 function save(silent){
@@ -371,7 +381,7 @@ function setWinner(set){
 // Returns {played, winner:0/1/null, setsWon:[a,b], ptsFor:[a,b]}
 function matchResult(m){
   let wa=0,wb=0, pa=0,pb=0, playedSets=0;
-  const need=Math.ceil(SETS/2); // 2
+  const need=Math.ceil(m.sets.length/2); // 1 game for round-robin, 2 for best-of-3 knockout
   for(let k=0;k<m.sets.length;k++){
     if(wa>=need||wb>=need) break;   // match already won — ignore any later (unplayed) set
     const w=setWinner(m.sets[k]);
@@ -404,12 +414,13 @@ function setError(a,b){
 // Apply red highlight + reason to a match's invalid sets; updates the card's .setWarn note.
 function markSetErrors(card, m){
   const inputs=card.querySelectorAll('.matchGrid input');
-  if(inputs.length<SETS*2) return;
+  const ns=m.sets.length;
+  if(inputs.length<ns*2) return;
   const msgs=[];
-  for(let s=0;s<SETS;s++){
+  for(let s=0;s<ns;s++){
     const err=setError(m.sets[s][0], m.sets[s][1]);
-    [inputs[s], inputs[s+SETS]].forEach(x=>{ if(!x)return; x.classList.toggle('err', !!err); if(err)x.title="Invalid set "+(s+1)+": "+err; else if(x.title&&x.title.startsWith("Invalid"))x.title=""; });
-    if(err) msgs.push("Set "+(s+1)+" — "+err);
+    [inputs[s], inputs[s+ns]].forEach(x=>{ if(!x)return; x.classList.toggle('err', !!err); if(err)x.title="Invalid score: "+err; else if(x.title&&x.title.startsWith("Invalid"))x.title=""; });
+    if(err) msgs.push((ns>1?("Game "+(s+1)+" — "):"")+err);
   }
   const warn=card.querySelector('.setWarn');
   if(warn){ warn.textContent = msgs.length?("⚠ "+msgs.join(" · ")):""; warn.style.display=msgs.length?"block":"none"; }
@@ -688,7 +699,7 @@ function render(){
   v.appendChild(head);
 
   // GROUPS
-  const gHd=document.createElement('div'); gHd.className="sectionHd"; gHd.textContent="Group Stage — Round Robin (best of 3 to 21)"; v.appendChild(gHd);
+  const gHd=document.createElement('div'); gHd.className="sectionHd"; gHd.textContent="Group Stage — Round Robin (1 game to 21)"; v.appendChild(gHd);
   const legend=document.createElement('div'); legend.className="legend";
   legend.innerHTML=`
     <div class="lgTitle">How to read the standings</div>
@@ -801,22 +812,23 @@ function renderGroup(g,gi){
     meta.append(nmIn,ctIn);
     card.appendChild(meta);
     const aw=r.decided&&r.winner===0, bw=r.decided&&r.winner===1;
-    // scoreboard-style grid: col 1 = pair names (stacked), then one column per set
+    // scoreboard-style grid: col 1 = pair names (stacked), then one column per game
+    const ns=m.sets.length;   // round-robin = 1 game; (knockout handled elsewhere)
     const grid=document.createElement('div'); grid.className="matchGrid";
-    grid.style.gridTemplateColumns=`minmax(96px,1fr) repeat(${SETS}, 52px)`;
+    grid.style.gridTemplateColumns=`minmax(96px,1fr) repeat(${ns}, 52px)`;
     grid.appendChild(document.createElement('div')); // empty corner above names
-    for(let s=0;s<SETS;s++){ const lb=document.createElement('div'); lb.className="mgLabel"; lb.textContent="S"+(s+1); grid.appendChild(lb); }
+    for(let s=0;s<ns;s++){ const lb=document.createElement('div'); lb.className="mgLabel"; lb.textContent=ns>1?("S"+(s+1)):"Score"; grid.appendChild(lb); }
     const inpTop=[], inpBot=[];
     const nA=document.createElement('div'); nA.className="mgName"+(aw?" w":"")+(aSerial?" serial":""); nA.title=aSerial?"Plays back-to-back (no rest)":""; nA.textContent=nameOf(m.a); nA.style.fontSize=nameFontSize(nameOf(m.a),13.5)+"px"; grid.appendChild(nA);
-    for(let s=0;s<SETS;s++){ const i=mkScore(m,mi,s,0); inpTop.push(i); grid.appendChild(i); }
+    for(let s=0;s<ns;s++){ const i=mkScore(m,mi,s,0); inpTop.push(i); grid.appendChild(i); }
     const nB=document.createElement('div'); nB.className="mgName"+(bw?" w":"")+(bSerial?" serial":""); nB.title=bSerial?"Plays back-to-back (no rest)":""; nB.textContent=nameOf(m.b); nB.style.fontSize=nameFontSize(nameOf(m.b),13.5)+"px"; grid.appendChild(nB);
-    for(let s=0;s<SETS;s++){ const i=mkScore(m,mi,s,1); inpBot.push(i); grid.appendChild(i); }
-    for(let s=0;s<SETS;s++){ wireAutofill21(m,s,inpTop[s],inpBot[s]); }
-    // 2-0 already? lock the (unused) deciding set so it can't be written
-    if(decidedInTwo(m.sets)){
-      if(m.sets[SETS-1][0]!==null||m.sets[SETS-1][1]!==null) m.sets[SETS-1]=[null,null];
-      inpTop[SETS-1].disabled=true; inpTop[SETS-1].value="";
-      inpBot[SETS-1].disabled=true; inpBot[SETS-1].value="";
+    for(let s=0;s<ns;s++){ const i=mkScore(m,mi,s,1); inpBot.push(i); grid.appendChild(i); }
+    for(let s=0;s<ns;s++){ wireAutofill21(m,s,inpTop[s],inpBot[s]); }
+    // 2-0 already? lock the (unused) deciding game (only applies to best-of-3)
+    if(ns>=3 && decidedInTwo(m.sets)){
+      if(m.sets[ns-1][0]!==null||m.sets[ns-1][1]!==null) m.sets[ns-1]=[null,null];
+      inpTop[ns-1].disabled=true; inpTop[ns-1].value="";
+      inpBot[ns-1].disabled=true; inpBot[ns-1].value="";
     }
     card.appendChild(grid);
     const warn=document.createElement('div'); warn.className="setWarn"; card.appendChild(warn);
