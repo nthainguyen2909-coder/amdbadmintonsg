@@ -33,6 +33,28 @@
   body[data-cat="women"]{--accent:#be185d}
   body[data-cat="women"] header{background:linear-gradient(100deg,#3a0820,#be185d,#e0629a)}
   body[data-cat="women"] .tab.active{color:#be185d}
+  body[data-cat="activities"]{--accent:#4338ca}
+  body[data-cat="activities"] header{background:linear-gradient(100deg,#0e1030,#4338ca,#5b52e0)}
+  body[data-cat="activities"] .tab.active{color:#4338ca}
+  /* activities view */
+  .actSearch{margin:2px 0 16px}
+  .actInput{width:100%;max-width:540px;padding:11px 15px;border:1px solid var(--line);border-radius:11px;font-size:15px;background:#fff;color:var(--txt);box-shadow:var(--shadow)}
+  .actInput:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(67,56,202,.12)}
+  .actCount{color:var(--muted);font-size:13px;margin-bottom:10px}
+  .actRow{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
+  .actRow.clash{border-color:#e6a23c;background:#fff8ec}
+  .actTime{min-width:82px;font-weight:800;font-size:15px;color:var(--accent);display:flex;flex-direction:column;line-height:1.2}
+  .actCourt{font-weight:600;font-size:11px;color:var(--muted)}
+  .actMid{flex:1;min-width:0}
+  .actMatchup{font-weight:700;font-size:13.5px}
+  .actMatchup .vs{color:var(--muted);font-weight:600;font-size:11px;margin:0 3px}
+  .actStage{color:var(--muted);font-size:12px;margin-top:2px}
+  .clashTag{color:#b4530a;font-weight:700;font-size:11px}
+  .actRoles{display:flex;gap:5px;flex-wrap:wrap}
+  .actRole{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+  .actRole.play{background:#eafaf2;color:#15803d;border:1px solid #a7e3c3}
+  .actRole.ump{background:#eef2ff;color:#4338ca;border:1px solid #c3ccf5}
+  .actRole.line{background:#fff4e6;color:#b4530a;border:1px solid #f0cfa0}
   header h1{font-size:21px;margin:0;font-weight:800;letter-spacing:.6px;color:#fff;line-height:1.12;text-shadow:0 1px 2px rgba(0,0,0,.25)}
   header h1 .yr{color:#ffd24a}
   header .sub{color:#c9efe9;font-size:12px;letter-spacing:.2px;margin-top:3px}
@@ -74,6 +96,11 @@
   .matchMeta input.mName{flex:1;min-width:110px}
   .matchMeta input.mTime{width:110px}
   .matchMeta input.mCourt{width:110px}
+  .matchOffic{display:flex;gap:6px;margin:0 0 6px;flex-wrap:wrap}
+  .matchOffic .offIn{flex:1;min-width:90px;background:#f3f6ff;border:1px solid #d7deef;border-radius:5px;color:var(--txt);padding:3px 6px;font-size:11.5px}
+  .koOffic{display:flex;gap:5px;padding:0 8px 6px;background:var(--panel2)}
+  .koOffic .offIn{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:5px;color:var(--txt);padding:2px 5px;font-size:11px}
+  .matchOffic .offIn::placeholder,.koOffic .offIn::placeholder{color:#8aa0c8}
   .koMeta{display:flex;gap:5px;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--panel2)}
   .koMeta input{background:var(--bg);border:1px solid var(--line);border-radius:5px;color:var(--txt);padding:2px 5px;font-size:11px}
   .koMeta input.kName{flex:1;min-width:60px}
@@ -292,7 +319,7 @@ function promptUnlock(){
   } else { alert("Wrong password — you can view only."); }
 }
 
-function blankMatch(a,b){ return {a,b,name:"",time:"",court:"",sets:Array.from({length:GROUP_SETS},()=>[null,null])}; }
+function blankMatch(a,b){ return {a,b,name:"",time:"",court:"",umpire:"",line1:"",line2:"",sets:Array.from({length:GROUP_SETS},()=>[null,null])}; }
 // force a sets array to exactly n games (keep existing scores, pad/trim)
 function normSets(arr,n){ arr=(arr||[]).slice(0,n); while(arr.length<n) arr.push([null,null]); return arr; }
 
@@ -318,7 +345,7 @@ function rebuildMatches(group){
   order.forEach(([a,b])=>{
     const m = blankMatch(a,b);
     const prev = old[a+"|"+b];
-    if(prev){ m.sets=normSets(prev.sets,GROUP_SETS); m.name=prev.name||""; m.time=prev.time||""; m.court=prev.court||""; }
+    if(prev){ m.sets=normSets(prev.sets,GROUP_SETS); m.name=prev.name||""; m.time=prev.time||""; m.court=prev.court||""; m.umpire=prev.umpire||""; m.line1=prev.line1||""; m.line2=prev.line2||""; }
     ms.push(m);
   });
   group.matches = ms;
@@ -693,6 +720,7 @@ function render(){
   renderTabs();
   const v=document.getElementById('view');
   v.innerHTML="";
+  if(currentCat==="activities"){ renderActivities(v); return; }
   const cfg=CATS[currentCat], cat=DB[currentCat];
   const q=cfg.groups*cfg.qualifiersPerGroup;
   const head=document.createElement('div');
@@ -753,6 +781,84 @@ function renderTabs(){
     b.onclick=()=>{currentCat=k;render();};
     t.appendChild(b);
   }
+  const ab=document.createElement('button');
+  ab.className="tab"+(currentCat==="activities"?" active":"");
+  ab.textContent="📋 Activities";
+  ab.onclick=()=>{currentCat="activities";render();};
+  t.appendChild(ab);
+}
+
+/* ===================== ACTIVITIES (combined schedule) ===================== */
+// turn a free-text time like "9:30", "9:30am", "14:00" into minutes for sorting
+function parseTime(t){
+  if(!t) return 1e9;
+  t=String(t);
+  const m=t.match(/(\d{1,2})\s*[:.]\s*(\d{2})/);
+  if(m){ let hh=+m[1],mm=+m[2]; if(/p/i.test(t)&&hh<12)hh+=12; if(/a/i.test(t)&&hh===12)hh=0; return hh*60+mm; }
+  const n=t.match(/\d{1,2}/); return n?(+n[0])*60:1e9;
+}
+// flatten every match (group + knockout) across all categories into one schedule list
+function collectSchedule(){
+  const out=[];
+  for(const k in CATS){
+    const cat=DB[k]; if(!cat) continue;
+    (cat.groups||[]).forEach(g=>{
+      const nm=id=>{const p=(g.pairs||[]).find(x=>x.id===id);return p?(p.name||""):"";};
+      (g.matches||[]).forEach(m=>{
+        out.push({catName:CATS[k].name, stage:"Group "+g.letter, name:m.name||"", time:m.time||"", court:m.court||"",
+          pairA:nm(m.a), pairB:nm(m.b), umpire:m.umpire||"", line1:m.line1||"", line2:m.line2||"", t:parseTime(m.time)});
+      });
+    });
+    if(cat.knockout){
+      cat.knockout.rounds.forEach((round,ri)=>{
+        round.forEach(tie=>{
+          const pa=(tie.top&&!tie.top.bye)?(tie.top.name||""):"", pb=(tie.bot&&!tie.bot.bye)?(tie.bot.name||""):"";
+          if(!pa&&!pb&&!tie.umpire&&!tie.line1&&!tie.line2) return;
+          out.push({catName:CATS[k].name, stage:fullRoundName(cat.knockout.rnames[ri]), name:tie.name||"", time:tie.time||"", court:tie.court||"",
+            pairA:pa, pairB:pb, umpire:tie.umpire||"", line1:tie.line1||"", line2:tie.line2||"", t:parseTime(tie.time)});
+        });
+      });
+    }
+  }
+  return out;
+}
+function renderActivities(v){
+  const head=document.createElement('div');
+  head.innerHTML=`<div class="catTitle">Activities · who plays &amp; officiates, and when</div><div class="catMeta">Search a name to see all of that person's matches — playing and officiating — across every category, sorted by time.</div>`;
+  v.appendChild(head);
+  const box=document.createElement('div'); box.className="actSearch";
+  const inp=document.createElement('input'); inp.className="actInput"; inp.type="search"; inp.placeholder="🔎 Type a player or official name…"; inp.value=window.__actQuery||"";
+  box.appendChild(inp); v.appendChild(box);
+  const results=document.createElement('div'); results.className="actResults"; v.appendChild(results);
+  inp.oninput=()=>{ window.__actQuery=inp.value; renderActResults(results, inp.value); };
+  renderActResults(results, inp.value);
+}
+function renderActResults(container, query){
+  container.innerHTML="";
+  const q=(query||"").trim().toLowerCase();
+  if(!q){ const n=document.createElement('div'); n.className="note"; n.innerHTML="Start typing a name above — e.g. a surname or part of a pair name — to see that person's full schedule."; container.appendChild(n); return; }
+  const has=s=>(s||"").toLowerCase().includes(q);
+  const rows=[];
+  collectSchedule().forEach(e=>{
+    const roles=[];
+    if(has(e.pairA)||has(e.pairB)) roles.push("Playing");
+    if(has(e.umpire)) roles.push("Umpire");
+    if(has(e.line1)||has(e.line2)) roles.push("Line judge");
+    if(roles.length) rows.push({e,roles});
+  });
+  if(!rows.length){ const n=document.createElement('div'); n.className="note"; n.innerHTML=`No matches found for "<b>${escapeHtml(query)}</b>" yet. Names come from the pair names and the Umpire/Line boxes you fill in.`; container.appendChild(n); return; }
+  rows.sort((a,b)=> a.e.t-b.e.t);
+  const tc={}; rows.forEach(r=>{ if(r.e.t<1e9) tc[r.e.t]=(tc[r.e.t]||0)+1; });  // detect two things at the same time
+  const hd=document.createElement('div'); hd.className="actCount"; hd.innerHTML=`<b>${rows.length}</b> item${rows.length>1?"s":""} for "<b>${escapeHtml(query)}</b>", sorted by time`; container.appendChild(hd);
+  rows.forEach(({e,roles})=>{
+    const clash = e.t<1e9 && tc[e.t]>1;
+    const r=document.createElement('div'); r.className="actRow"+(clash?" clash":"");
+    r.innerHTML=`<div class="actTime">${e.time?escapeHtml(e.time):"— time —"}${e.court?`<span class="actCourt">${escapeHtml(e.court)}</span>`:""}</div>`+
+      `<div class="actMid"><div class="actMatchup">${escapeHtml(e.pairA||"TBD")} <span class="vs">vs</span> ${escapeHtml(e.pairB||"TBD")}</div>`+
+      `<div class="actStage">${escapeHtml(e.catName)} · ${escapeHtml(e.stage)}${e.name?(" · "+escapeHtml(e.name)):""}${clash?' <span class="clashTag">⚠ time clash</span>':''}</div></div>`+
+      `<div class="actRoles">${roles.map(x=>`<span class="actRole ${x==='Playing'?'play':(x==='Umpire'?'ump':'line')}">${escapeHtml(x)}</span>`).join("")}</div>`;
+    container.appendChild(r);
+  });
 }
 
 function renderGroup(g,gi){
@@ -816,6 +922,11 @@ function renderGroup(g,gi){
     ctIn.oninput=()=>{ m.court=ctIn.value; save(true); };
     meta.append(nmIn,tmIn,ctIn);
     card.appendChild(meta);
+    // officials row: umpire + 2 line judges
+    const offs=document.createElement('div'); offs.className="matchOffic";
+    const mkOff=(ph,key)=>{ const i=document.createElement('input'); i.className="offIn"; i.placeholder=ph; i.value=m[key]||""; i.oninput=()=>{ m[key]=i.value; save(true); }; return i; };
+    offs.append(mkOff("Umpire","umpire"), mkOff("Line 1","line1"), mkOff("Line 2","line2"));
+    card.appendChild(offs);
     const aw=r.decided&&r.winner===0, bw=r.decided&&r.winner===1;
     // scoreboard-style grid: col 1 = pair names (stacked), then one column per game
     const ns=m.sets.length;   // round-robin = 1 game; (knockout handled elsewhere)
@@ -991,6 +1102,10 @@ function renderTie(catKey,ri,ti,tie,isFinal){
     ctIn.oninput=()=>{ tie.court=ctIn.value; save(true); };
     meta.append(nmIn,tmIn,ctIn);
     el.appendChild(meta);
+    const offs=document.createElement('div'); offs.className="koOffic";
+    const mkOff=(ph,key)=>{ const i=document.createElement('input'); i.className="offIn"; i.placeholder=ph; i.value=tie[key]||""; i.oninput=()=>{ tie[key]=i.value; save(true); }; return i; };
+    offs.append(mkOff("Umpire","umpire"), mkOff("Line 1","line1"), mkOff("Line 2","line2"));
+    el.appendChild(offs);
   }
   ["top","bot"].forEach(side=>{
     const p=tie[side];
