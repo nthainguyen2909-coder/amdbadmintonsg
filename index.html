@@ -111,6 +111,18 @@
   .matchMeta input.mName{flex:1;min-width:110px}
   .matchMeta input.mTime{width:110px}
   .matchMeta input.mCourt{width:110px}
+  .matchHdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;padding-bottom:6px;border-bottom:1px dashed var(--line)}
+  .koHdr{padding:6px 8px;margin-bottom:0;background:var(--panel2)}
+  .matchSum{flex:1;min-width:0;font-size:12px;color:var(--txt);line-height:1.5;overflow-wrap:anywhere}
+  .matchSum .muted{color:var(--muted);font-style:italic}
+  .matchSum .dot{color:var(--line);margin:0 1px}
+  .detBtn{padding:4px 11px;font-size:11.5px;flex:none}
+  body.vo .detBtn{display:none}
+  .detBox{max-width:380px}
+  .detField{display:block;margin-bottom:11px}
+  .detField span{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  .detField input{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff;color:var(--txt)}
+  .detField input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(15,118,110,.12)}
   .matchOffic{display:flex;gap:6px;margin:0 0 6px;flex-wrap:wrap}
   .matchOffic .offIn{flex:1;min-width:90px;background:#f3f6ff;border:1px solid #d7deef;border-radius:5px;color:var(--txt);padding:3px 6px;font-size:11.5px}
   .koOffic{display:flex;gap:5px;padding:0 8px 6px;background:var(--panel2)}
@@ -1021,6 +1033,41 @@ function renderActResults(container, query){
   });
 }
 
+/* ---- match details: compact summary + titled popup editor ---- */
+function detailsSummary(o){
+  const parts=[];
+  if(o.name) parts.push('<b>'+escapeHtml(o.name)+'</b>');
+  if(o.time) parts.push('🕐 '+escapeHtml(o.time));
+  if(o.court) parts.push('📍 '+escapeHtml(o.court));
+  const offs=[o.umpire,o.line1,o.line2].map(x=>(x||'').trim()).filter(Boolean);
+  if(offs.length) parts.push('👤 '+escapeHtml(offs.join(' / ')));
+  return parts.length ? parts.join(' <span class="dot">·</span> ') : '<span class="muted">No details set yet</span>';
+}
+function detailsHeader(obj, title){
+  const hdr=document.createElement('div'); hdr.className="matchHdr";
+  const sum=document.createElement('div'); sum.className="matchSum"; sum.innerHTML=detailsSummary(obj);
+  hdr.appendChild(sum);
+  if(!readOnly()){
+    const edit=document.createElement('button'); edit.className="btn detBtn"; edit.textContent="✎ Details";
+    edit.onclick=()=>openDetailsModal(obj, title);
+    hdr.appendChild(edit);
+  }
+  return hdr;
+}
+function openDetailsModal(obj, title){
+  if(document.getElementById('detModal')) return;
+  const ov=document.createElement('div'); ov.id="detModal"; ov.className="pwOverlay";
+  const fields=[["name","Match number / name","e.g. M12"],["time","Time","e.g. 9:30 AM"],["court","Court","e.g. Court 1"],["umpire","Umpire","Name"],["line1","Line judge 1","Name"],["line2","Line judge 2","Name"]];
+  ov.innerHTML=`<div class="pwBox detBox"><div class="pwTitle">${escapeHtml(title)}</div>`+
+    fields.map(([k,lbl,ph])=>`<label class="detField"><span>${escapeHtml(lbl)}</span><input data-k="${k}" placeholder="${escapeHtml(ph)}" value="${escapeHtml(obj[k]||"")}"></label>`).join("")+
+    `<div class="pwBtns"><button class="btn pwOk detDone">Done</button></div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelectorAll('input[data-k]').forEach(inp=>{ inp.oninput=()=>{ obj[inp.getAttribute('data-k')]=inp.value; save(true); }; });
+  const close=()=>{ ov.remove(); render(); };
+  ov.querySelector('.detDone').onclick=close;
+  ov.onclick=(e)=>{ if(e.target===ov) close(); };
+  const f=ov.querySelector('input'); if(f) f.focus();
+}
 function renderGroup(g,gi){
   const el=document.createElement('div'); el.className="group";
   const st=standings(g);
@@ -1072,21 +1119,8 @@ function renderGroup(g,gi){
     const aSerial=inAdj(prev,m.a)||inAdj(next,m.a);
     const bSerial=inAdj(prev,m.b)||inAdj(next,m.b);
     const card=document.createElement('div'); card.className="matchCard"+((aSerial||bSerial)?" serialWarn":"");
-    // name + court meta row
-    const meta=document.createElement('div'); meta.className="matchMeta";
-    const nmIn=document.createElement('input'); nmIn.className="mName"; nmIn.placeholder="Match name / # (e.g. M12)"; nmIn.value=m.name||"";
-    nmIn.oninput=()=>{ m.name=nmIn.value; save(true); };
-    const tmIn=document.createElement('input'); tmIn.className="mTime"; tmIn.placeholder="Time (e.g. 9:30)"; tmIn.value=m.time||"";
-    tmIn.oninput=()=>{ m.time=tmIn.value; save(true); };
-    const ctIn=document.createElement('input'); ctIn.className="mCourt"; ctIn.placeholder="Court"; ctIn.value=m.court||"";
-    ctIn.oninput=()=>{ m.court=ctIn.value; save(true); };
-    meta.append(nmIn,tmIn,ctIn);
-    card.appendChild(meta);
-    // officials row: umpire + 2 line judges
-    const offs=document.createElement('div'); offs.className="matchOffic";
-    const mkOff=(ph,key)=>{ const i=document.createElement('input'); i.className="offIn"; i.placeholder=ph; i.value=m[key]||""; i.oninput=()=>{ m[key]=i.value; save(true); }; return i; };
-    offs.append(mkOff("Umpire","umpire"), mkOff("Line 1","line1"), mkOff("Line 2","line2"));
-    card.appendChild(offs);
+    // match details: compact summary + popup editor (titled fields)
+    card.appendChild(detailsHeader(m, "Match details"));
     const aw=r.decided&&r.winner===0, bw=r.decided&&r.winner===1;
     // scoreboard-style grid: col 1 = pair names (stacked), then one column per game
     const ns=m.sets.length;   // round-robin = 1 game; (knockout handled elsewhere)
@@ -1251,21 +1285,9 @@ function renderBracket(catKey){
 function renderTie(catKey,ri,ti,tie,isFinal){
   const el=document.createElement('div'); el.className="tie";
   const w=tieWinner(tie);
-  // name + court meta (only meaningful once both opponents are real)
+  // match details (only meaningful once both opponents are real)
   if(bothReal(tie)){
-    const meta=document.createElement('div'); meta.className="koMeta";
-    const nmIn=document.createElement('input'); nmIn.className="kName"; nmIn.placeholder="Match name / #"; nmIn.value=tie.name||"";
-    nmIn.oninput=()=>{ tie.name=nmIn.value; save(true); };
-    const tmIn=document.createElement('input'); tmIn.className="kTime"; tmIn.placeholder="Time"; tmIn.value=tie.time||"";
-    tmIn.oninput=()=>{ tie.time=tmIn.value; save(true); };
-    const ctIn=document.createElement('input'); ctIn.className="kCourt"; ctIn.placeholder="Court"; ctIn.value=tie.court||"";
-    ctIn.oninput=()=>{ tie.court=ctIn.value; save(true); };
-    meta.append(nmIn,tmIn,ctIn);
-    el.appendChild(meta);
-    const offs=document.createElement('div'); offs.className="koOffic";
-    const mkOff=(ph,key)=>{ const i=document.createElement('input'); i.className="offIn"; i.placeholder=ph; i.value=tie[key]||""; i.oninput=()=>{ tie[key]=i.value; save(true); }; return i; };
-    offs.append(mkOff("Umpire","umpire"), mkOff("Line 1","line1"), mkOff("Line 2","line2"));
-    el.appendChild(offs);
+    const dh=detailsHeader(tie, "Match details"); dh.classList.add("koHdr"); el.appendChild(dh);
   }
   ["top","bot"].forEach(side=>{
     const p=tie[side];
