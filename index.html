@@ -225,6 +225,7 @@
   .hidden{display:none}
   .champBanner{margin-top:14px;padding:12px 16px;background:linear-gradient(90deg,#fdf5db,#f8e7ad);border:1px solid #e8cd79;border-radius:12px;color:#6b4e11;font-weight:800;font-size:15px;display:none;box-shadow:var(--shadow)}
   .champBanner .runnerUp{display:block;margin-top:5px;padding-top:5px;border-top:1px solid #e8cd79;color:#5c5c66;font-weight:700;font-size:13.5px}
+  .champBanner .runnerUp.bronze{color:#8a5a2b}
   .champBanner.show{display:block}
   .flash{position:fixed;bottom:18px;right:18px;background:var(--accent2);color:#fff;padding:9px 16px;border-radius:9px;font-weight:700;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;box-shadow:0 6px 20px rgba(16,24,40,.18)}
   .flash.show{opacity:1}
@@ -1546,10 +1547,12 @@ function renderBracket(catKey){
   const finalRound=ko.rounds[ko.rounds.length-1];
   const champ  = finalRound.length===1 ? tieWinner(finalRound[0]) : null;
   const runner = finalRound.length===1 ? tieLoser(finalRound[0])  : null;
+  const third  = ko.third ? tieWinner(ko.third) : null;
   const banner=document.createElement('div'); banner.className="champBanner"+(champ&&champ.name?" show":"");
   if(champ&&champ.name){
     banner.innerHTML=`🏆 Champion — ${escapeHtml(champ.name)}`
-      + (runner&&runner.name ? `<span class="runnerUp">🥈 Runner-up — ${escapeHtml(runner.name)}</span>` : "");
+      + (runner&&runner.name ? `<span class="runnerUp">🥈 Runner-up — ${escapeHtml(runner.name)}</span>` : "")
+      + (third&&third.name   ? `<span class="runnerUp bronze">🥉 3rd place — ${escapeHtml(third.name)}</span>` : "");
   }
   wrap.appendChild(banner);
 
