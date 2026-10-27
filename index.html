@@ -86,6 +86,12 @@
   .catTitle{font-size:19px;font-weight:800;margin:6px 0 2px;color:var(--accent);letter-spacing:-.3px}
   .catMeta{color:var(--muted);font-size:12.5px;margin-bottom:12px}
   .sectionHd{font-size:15px;font-weight:700;color:var(--txt);margin:26px 0 12px;border-bottom:2px solid var(--line);padding-bottom:8px}
+  .koHd{display:flex;align-items:center;gap:10px}
+  .fmtToggle{margin-left:auto;display:inline-flex;align-items:center;gap:6px}
+  .fmtLbl{font-size:12px;font-weight:600;color:var(--muted)}
+  .fmtBtn{padding:5px 11px;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
+  .fmtBtn:hover{border-color:var(--accent);color:var(--accent)}
+  .fmtBtn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
   .groupGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:14px}
   .group{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}
   .group h3{margin:0 0 8px;font-size:14px;display:flex;align-items:center;gap:8px}
@@ -101,7 +107,7 @@
   .pairIn{width:100%;background:transparent;border:1px solid transparent;border-radius:5px;color:var(--txt);padding:3px 5px;font-size:12.5px;font-weight:600}
   .pairIn:focus{border-color:var(--accent);background:var(--panel2);outline:none}
   .matches{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
-  .matchCard{border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-bottom:7px;background:var(--panel2);border-left:3px solid var(--line)}
+  .matchCard{border:1px solid var(--line);border-radius:7px;padding:5px 7px;margin-bottom:5px;background:var(--panel2);border-left:3px solid var(--line)}
   .matchCard.serialWarn{border-left:3px solid #e6a23c;background:#fff8ec}
   .mgName.serial::after{content:" ⚠";color:#c77b1a;font-weight:700}
   .matchGrid input.err,.tie .slot input.err{border-color:#e5484d !important;background:#fdecee !important;color:#c0272d}
@@ -145,11 +151,11 @@
   .setLabels{display:flex;gap:5px;font-size:10px;color:var(--muted)}
   .setLabels span{width:52px;text-align:center}
   .lots{font-size:10px;color:var(--gold);background:#fbf2d6;border:1px solid #ecd79c;border-radius:4px;padding:1px 5px;font-weight:600}
-  .matchGrid{display:grid;gap:5px 12px;align-items:center;margin-top:2px;padding-left:2px}
+  .matchGrid{display:grid;gap:3px 8px;align-items:center;margin-top:2px;padding-left:2px}
   .mgLabel{font-size:11px;color:var(--muted);text-align:center;font-weight:600}
   .mgName{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;padding-right:6px;align-self:center}
   .mgName.w{color:var(--accent2);font-weight:700}
-  .matchGrid input{width:52px;height:40px;text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:7px;color:var(--txt);padding:4px;font-size:19px;font-weight:700}
+  .matchGrid input{width:44px;height:32px;text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:6px;color:var(--txt);padding:3px;font-size:16px;font-weight:700}
   .matchGrid input:focus{border-color:var(--accent);outline:none;background:var(--focus);box-shadow:0 0 0 3px rgba(15,118,110,.12)}
   .matchGrid input:disabled,.setBox input:disabled,.tie .slot input:disabled{background:repeating-linear-gradient(135deg,#eef1f5,#eef1f5 5px,#e7ebf1 5px,#e7ebf1 10px);border-color:#e3e8ef;color:#b4bcc8;cursor:not-allowed;box-shadow:none}
   .bracketWrap{display:flex;gap:0;overflow-x:auto;padding:10px 4px 20px}
@@ -720,19 +726,30 @@ function fillFirstRound(catKey){
   const ko=DB[catKey].knockout; if(!ko||!ko.draw) return;
   ko.draw.forEach((d,i)=>{ const t=ko.rounds[0][i]; if(!t)return; t.top=qRefTeam(catKey,d.topRef); t.bot=qRefTeam(catKey,d.botRef); });
 }
+function koSets(catKey){ const n=DB[catKey].koSets; return (n===1||n===3)?n:3; }   // knockout format: 1 game or best-of-3
 function buildKnockout(catKey, reseed){
   const cat=DB[catKey];
   const size=firstRoundSize(catKey), nTies=size/2, rnames=roundNames(size);
+  const ks=koSets(catKey);
   if(!cat.knockout || reseed){
     const rounds=[];
     let n=nTies;
-    rounds.push(Array.from({length:n},()=>({top:null,bot:null,name:"",court:"",sets:Array.from({length:SETS},()=>[null,null])})));
-    for(let r=1;r<rnames.length;r++){ n=Math.ceil(n/2); rounds.push(Array.from({length:n},()=>({top:null,bot:null,name:"",court:"",sets:Array.from({length:SETS},()=>[null,null])}))); }
+    rounds.push(Array.from({length:n},()=>({top:null,bot:null,name:"",court:"",sets:Array.from({length:ks},()=>[null,null])})));
+    for(let r=1;r<rnames.length;r++){ n=Math.ceil(n/2); rounds.push(Array.from({length:n},()=>({top:null,bot:null,name:"",court:"",sets:Array.from({length:ks},()=>[null,null])}))); }
     cat.knockout={size,rounds,rnames,draw:defaultDraw(catKey)};
   }
   if(!cat.knockout.draw) cat.knockout.draw=defaultDraw(catKey);   // migrate older saves
+  // keep every tie's games count in sync with the chosen format (preserves scores)
+  cat.knockout.rounds.forEach(rd=>rd.forEach(t=>{ t.sets=normSets(t.sets,ks); }));
   fillFirstRound(catKey);
   propagate(catKey);
+}
+// Switch the knockout format for a category (1 game vs best-of-3) without losing the draw.
+function setKoFormat(catKey, n){
+  DB[catKey].koSets=n;
+  const ko=DB[catKey].knockout;
+  if(ko){ ko.rounds.forEach(rd=>rd.forEach(t=>{ t.sets=normSets(t.sets,n); })); }
+  save(); render();
 }
 // Button handler: (re)build the bracket from current standings, save, and refresh the screen.
 function reseedKnockout(){
@@ -832,7 +849,20 @@ function render(){
   v.appendChild(grid);
 
   // KNOCKOUT
-  const kHd=document.createElement('div'); kHd.className="sectionHd"; kHd.textContent="Knockout Stage"; v.appendChild(kHd);
+  const kHd=document.createElement('div'); kHd.className="sectionHd koHd";
+  kHd.innerHTML=`<span>Knockout Stage</span>`;
+  if(!readOnly()){
+    const ks=koSets(currentCat);
+    const fmt=document.createElement('div'); fmt.className="fmtToggle";
+    fmt.innerHTML=`<span class="fmtLbl">Format:</span>`+
+      `<button class="fmtBtn${ks===1?" on":""}" data-n="1">1 game</button>`+
+      `<button class="fmtBtn${ks===3?" on":""}" data-n="3">Best of 3</button>`;
+    fmt.querySelectorAll('.fmtBtn').forEach(b=>{ b.onclick=()=>{ const n=+b.getAttribute('data-n'); if(n!==koSets(currentCat)) setKoFormat(currentCat,n); }; });
+    kHd.appendChild(fmt);
+  } else {
+    const t=document.createElement('span'); t.className="fmtLbl"; t.style.marginLeft="auto"; t.textContent=(koSets(currentCat)===1?"1 game to 21":"Best of 3 to 21"); kHd.appendChild(t);
+  }
+  v.appendChild(kHd);
   if(!cat.knockout){
     const p=document.createElement('div'); p.className="note";
     p.innerHTML=`Knockout not seeded yet. Fill group results, then click <b>“Re-seed knockout from standings”</b> above.`;
@@ -1125,7 +1155,7 @@ function renderGroup(g,gi){
     // scoreboard-style grid: col 1 = pair names (stacked), then one column per game
     const ns=m.sets.length;   // round-robin = 1 game; (knockout handled elsewhere)
     const grid=document.createElement('div'); grid.className="matchGrid";
-    grid.style.gridTemplateColumns=`minmax(96px,1fr) repeat(${ns}, 52px)`;
+    grid.style.gridTemplateColumns=`minmax(88px,1fr) repeat(${ns}, 44px)`;
     grid.appendChild(document.createElement('div')); // empty corner above names
     for(let s=0;s<ns;s++){ const lb=document.createElement('div'); lb.className="mgLabel"; lb.textContent=ns>1?("S"+(s+1)):"Score"; grid.appendChild(lb); }
     const inpTop=[], inpBot=[];
@@ -1241,7 +1271,7 @@ function fitText(el, maxPx, minPx){
 // Make every group-match pair name as big as it can be without spilling out of its cell.
 function fitMatchNames(){
   const els=document.querySelectorAll('#view .mgName');
-  els.forEach(el=>fitText(el, 20, 9));
+  els.forEach(el=>fitText(el, 16, 8));
 }
 
 function refreshKnockoutNames(){
@@ -1319,12 +1349,13 @@ function renderTie(catKey,ri,ti,tie,isFinal){
     // score inputs only if both sides are real (not bye/empty)
     if(bothReal(tie)){
       const sb=document.createElement('div'); sb.className="setBox";
-      for(let s=0;s<SETS;s++){
+      const kns=tie.sets.length;   // games in this tie (1 or best-of-3)
+      for(let s=0;s<kns;s++){
         const idx = side==="top"?0:1;
         const inp=document.createElement('input'); inp.type="number"; inp.min="0"; inp.max="30";
         let val=tie.sets[s][idx];
-        // 2-0 already? lock the deciding set and clear any stray value.
-        if(s===SETS-1 && decidedInTwo(tie.sets)){ if(val!==null){tie.sets[s][idx]=null;val=null;} inp.disabled=true; }
+        // 2-0 already? lock the (unused) deciding game — only for best-of-3
+        if(kns>=3 && s===kns-1 && decidedInTwo(tie.sets)){ if(val!==null){tie.sets[s][idx]=null;val=null;} inp.disabled=true; }
         inp.value=(val===null||val===undefined)?"":val;
         const serr=setError(tie.sets[s][0], tie.sets[s][1]);
         if(serr){ inp.classList.add('err'); inp.title="Invalid set "+(s+1)+": "+serr; }
