@@ -62,6 +62,16 @@
   .crPair{font-size:13.5px;font-weight:600;margin-top:2px;color:#1f2a33}
   .crVs{color:var(--muted);font-weight:400;font-size:11px;margin:0 3px}
   .crOff{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .crRow.st-done{border-left:3px solid #16a34a}
+  .crRow.st-live{border-left:3px solid #e6a23c;background:#fffaf0}
+  .crBadge{margin-left:auto;font-size:10px;font-weight:800;padding:1px 8px;border-radius:999px;white-space:nowrap}
+  .crBadge.done{background:#e6f6ec;color:#15803d}
+  .crBadge.live{background:#fdf1dd;color:#b4530a}
+  .crScore{font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums;margin-left:4px}
+  .crWin{color:#14612f;font-weight:800}
+  .stChip{display:inline-block;font-size:10.5px;font-weight:800;padding:0 7px;border-radius:999px;margin-left:4px;vertical-align:middle}
+  .stChip.done{background:#e6f6ec;color:#15803d}
+  .stChip.live{background:#fdf1dd;color:#b4530a}
   /* activities view */
   .actSearch{margin:2px 0 16px}
   .actInput{width:100%;max-width:540px;padding:11px 15px;border:1px solid var(--line);border-radius:11px;font-size:15px;background:#fff;color:var(--txt);box-shadow:var(--shadow)}
@@ -1104,7 +1114,7 @@ function renderCourts(v){
     if(ko&&ko.third&&ko.third.time&&ko.third.court){ const t=ko.third, rn=s=>isRef(s)?"":s;
       items.push({catName:CATS[k].name, stage:"3rd place", name:t.name||"", time:t.time||"", court:t.court,
         pairA:(t.top&&!t.top.bye)?rn(t.top.name||""):"", pairB:(t.bot&&!t.bot.bye)?rn(t.bot.name||""):"",
-        umpire:t.umpire||"", line1:t.line1||"", line2:t.line2||"", t:parseTime(t.time)}); } }
+        umpire:t.umpire||"", line1:t.line1||"", line2:t.line2||"", sets:t.sets, t:parseTime(t.time)}); } }
   const byCourt={};
   items.forEach(e=>{ const c=(String(e.court).match(/\d+/)||["?"])[0]; (byCourt[c]=byCourt[c]||[]).push(e); });
   const courts=Object.keys(byCourt).sort((a,b)=>(a==="?"?1e9:+a)-(b==="?"?1e9:+b));
@@ -1122,10 +1132,23 @@ function renderCourts(v){
     list.forEach(e=>{
       const off=[e.umpire?('🧑‍⚖️ '+escapeHtml(e.umpire)):'',
                  (e.line1||e.line2)?('🚩 '+[e.line1,e.line2].filter(Boolean).map(escapeHtml).join(', ')):''].filter(Boolean).join(' · ');
-      const row=document.createElement('div'); row.className="crRow";
+      // live status from the filled-in score
+      let st={cls:"up",badge:"",score:"",winner:null};
+      if(e.pairA&&e.pairB&&e.sets){
+        const r=matchResult({sets:e.sets});
+        const score=e.sets.filter(s=>s&&s[0]!=null&&s[1]!=null).map(s=>s[0]+"–"+s[1]).join(", ");
+        if(r.decided)       st={cls:"done",badge:"✓ Done",score,winner:r.winner};
+        else if(r.playedAny || e.sets.some(s=>s&&(s[0]!=null||s[1]!=null))) st={cls:"live",badge:"● Playing",score,winner:null};
+      }
+      let pa=e.pairA?pairNameHTML(e.pairA):'<span class="muted">—</span>';
+      let pb=e.pairB?pairNameHTML(e.pairB):'<span class="muted">—</span>';
+      if(st.winner===0) pa='<span class="crWin">'+pa+' ✓</span>';
+      if(st.winner===1) pb='<span class="crWin">'+pb+' ✓</span>';
+      const row=document.createElement('div'); row.className="crRow st-"+st.cls;
       row.innerHTML=`<div class="crTop"><span class="crTime">${escapeHtml(e.time||'—')}</span>`
-        +`<span class="crTag">${escapeHtml(e.name||'')} · ${escapeHtml(e.catName)} ${escapeHtml(e.stage)}</span></div>`
-        +`<div class="crPair">${e.pairA?pairNameHTML(e.pairA):'<span class="muted">—</span>'} <span class="crVs">vs</span> ${e.pairB?pairNameHTML(e.pairB):'<span class="muted">—</span>'}</div>`
+        +`<span class="crTag">${escapeHtml(e.name||'')} · ${escapeHtml(e.catName)} ${escapeHtml(e.stage)}</span>`
+        +(st.badge?`<span class="crBadge ${st.cls}">${st.badge}</span>`:'')+`</div>`
+        +`<div class="crPair">${pa} <span class="crVs">vs</span> ${pb}${st.score?` <span class="crScore">${escapeHtml(st.score)}</span>`:''}</div>`
         +(off?`<div class="crOff">${off}</div>`:'');
       card.appendChild(row);
     });
@@ -1152,7 +1175,7 @@ function collectSchedule(){
       const nm=id=>{const p=(g.pairs||[]).find(x=>x.id===id);return p?(p.name||""):"";};
       (g.matches||[]).forEach(m=>{
         out.push({catName:CATS[k].name, stage:"Group "+g.letter, name:m.name||"", time:m.time||"", court:m.court||"",
-          pairA:nm(m.a), pairB:nm(m.b), umpire:m.umpire||"", line1:m.line1||"", line2:m.line2||"", t:parseTime(m.time)});
+          pairA:nm(m.a), pairB:nm(m.b), umpire:m.umpire||"", line1:m.line1||"", line2:m.line2||"", sets:m.sets, t:parseTime(m.time)});
       });
     });
     if(cat.knockout){
@@ -1163,12 +1186,23 @@ function collectSchedule(){
           const pa=(tie.top&&!tie.top.bye)?rn(tie.top.name||""):"", pb=(tie.bot&&!tie.bot.bye)?rn(tie.bot.name||""):"";
           if(!pa&&!pb&&!tie.umpire&&!tie.line1&&!tie.line2) return;
           out.push({catName:CATS[k].name, stage:fullRoundName(cat.knockout.rnames[ri]), name:tie.name||"", time:tie.time||"", court:tie.court||"",
-            pairA:pa, pairB:pb, umpire:tie.umpire||"", line1:tie.line1||"", line2:tie.line2||"", t:parseTime(tie.time)});
+            pairA:pa, pairB:pb, umpire:tie.umpire||"", line1:tie.line1||"", line2:tie.line2||"", sets:tie.sets, t:parseTime(tie.time)});
         });
       });
     }
   }
   return out;
+}
+// live status chip for a schedule entry (done + score / playing), from the filled-in result
+function statusChip(e){
+  if(!e||!e.pairA||!e.pairB||!e.sets) return "";
+  const r=matchResult({sets:e.sets});
+  if(r.decided){
+    const score=e.sets.filter(s=>s&&s[0]!=null&&s[1]!=null).map(s=>s[0]+"–"+s[1]).join(", ");
+    return ` <span class="stChip done">✓ Done${score?" "+escapeHtml(score):""}</span>`;
+  }
+  if(r.playedAny || e.sets.some(s=>s&&(s[0]!=null||s[1]!=null))) return ` <span class="stChip live">● Playing</span>`;
+  return "";
 }
 // split a pair name ("Alex / Ben" or "Alex - Ben") into individual people
 // a knockout group-rank placeholder like "A1", "B2", "F12" — not a real person
@@ -1268,7 +1302,7 @@ function renderPinnedResults(container){
     const r=document.createElement('div'); r.className="actRow"+(clash?" clash":"");
     r.innerHTML=`<div class="actTime">${e.time?escapeHtml(e.time):"— time —"}${e.court?`<span class="actCourt">${escapeHtml(e.court)}</span>`:""}</div>`+
       `<div class="actMid"><div class="actMatchup">${escapeHtml(e.pairA||"TBD")} <span class="vs">vs</span> ${escapeHtml(e.pairB||"TBD")}</div>`+
-      `<div class="actStage">${escapeHtml(e.catName)} · ${escapeHtml(e.stage)}${clash?' <span class="clashTag">⚠ time clash</span>':''}</div></div>`+
+      `<div class="actStage">${escapeHtml(e.catName)} · ${escapeHtml(e.stage)}${statusChip(e)}${clash?' <span class="clashTag">⚠ time clash</span>':''}</div></div>`+
       `<div class="actRoles">${who.map(w=>`<span class="actRole ${roleCls(w.roles[0])}" title="${escapeHtml(w.roles.join(', '))}">${escapeHtml(w.name)} · ${escapeHtml(w.roles[0])}</span>`).join("")}</div>`;
     container.appendChild(r);
   });
@@ -1300,7 +1334,7 @@ function renderActResults(container, query){
     const r=document.createElement('div'); r.className="actRow"+(clash?" clash":"");
     r.innerHTML=`<div class="actTime">${e.time?escapeHtml(e.time):"— time —"}${e.court?`<span class="actCourt">${escapeHtml(e.court)}</span>`:""}</div>`+
       `<div class="actMid"><div class="actMatchup">${escapeHtml(e.pairA||"TBD")} <span class="vs">vs</span> ${escapeHtml(e.pairB||"TBD")}</div>`+
-      `<div class="actStage">${escapeHtml(e.catName)} · ${escapeHtml(e.stage)}${e.name?(" · "+escapeHtml(e.name)):""}${clash?' <span class="clashTag">⚠ time clash</span>':''}</div></div>`+
+      `<div class="actStage">${escapeHtml(e.catName)} · ${escapeHtml(e.stage)}${e.name?(" · "+escapeHtml(e.name)):""}${statusChip(e)}${clash?' <span class="clashTag">⚠ time clash</span>':''}</div></div>`+
       `<div class="actRoles">${roles.map(x=>`<span class="actRole ${x==='Playing'?'play':(x==='Umpire'?'ump':'line')}">${escapeHtml(x)}</span>`).join("")}</div>`;
     container.appendChild(r);
   });
@@ -1554,10 +1588,8 @@ function renderBracket(catKey){
       + (runner&&runner.name ? `<span class="runnerUp">🥈 Runner-up — ${escapeHtml(runner.name)}</span>` : "")
       + (third&&third.name   ? `<span class="runnerUp bronze">🥉 3rd place — ${escapeHtml(third.name)}</span>` : "");
   }
-  wrap.appendChild(banner);
 
-  // 3rd/4th place playoff — rendered as its own box BELOW the bracket so it never
-  // disturbs the semifinal→final connector geometry
+  // 3rd/4th place playoff — its own box below the bracket, ABOVE the podium banner
   if(ko.third){
     const box=document.createElement('div'); box.className="thirdBox";
     const lbl=document.createElement('div'); lbl.className="rhd"; lbl.textContent="3rd / 4th place"; box.appendChild(lbl);
@@ -1567,6 +1599,8 @@ function renderBracket(catKey){
     box.appendChild(t);
     wrap.appendChild(box);
   }
+
+  wrap.appendChild(banner);   // podium banner last
   return wrap;
 }
 
