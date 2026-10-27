@@ -907,9 +907,8 @@ function togglePin(n){ n=(n||"").trim(); if(!n)return; let a=getPins(); if(isPin
 function setActQuery(q){ window.__actQuery=q||""; try{ localStorage.setItem("amd_actQuery", window.__actQuery); }catch(e){} }
 function renderActivities(v){
   if(window.__actQuery==null){ try{ window.__actQuery=localStorage.getItem("amd_actQuery")||""; }catch(e){ window.__actQuery=""; } }
-  if(!(window.__actQuery||"").trim() && getPins().length){ window.__actQuery=getPins()[getPins().length-1]; }  // default to your pin
   const head=document.createElement('div');
-  head.innerHTML=`<div class="catTitle">Activities · what everyone should do, and when</div><div class="catMeta">Tap a name (or search) to see that person's full schedule. Pin your name with 📌 for quick access.</div>`;
+  head.innerHTML=`<div class="catTitle">Activities · what everyone should do, and when</div><div class="catMeta">Tap a name (or search) to see one person. Pin names with 📌 to watch several at once — their matches (group + knockout) all show together.</div>`;
   v.appendChild(head);
   const curSel=(window.__actQuery||"").trim().toLowerCase();
   // 📌 pinned quick-access row
@@ -943,8 +942,48 @@ function renderActivities(v){
     dir.appendChild(chips); v.appendChild(dir);
   }
   const results=document.createElement('div'); results.className="actResults"; v.appendChild(results);
-  inp.oninput=()=>{ setActQuery(inp.value); renderActResults(results, inp.value); };
-  renderActResults(results, inp.value);
+  const show=()=>{
+    const q=(window.__actQuery||"").trim();
+    if(q){ renderActResults(results, q); }            // searching / focused on one person
+    else if(getPins().length){ renderPinnedResults(results); }  // no search -> combined watchlist of pins
+    else { renderActResults(results, ""); }           // prompt
+  };
+  inp.oninput=()=>{ setActQuery(inp.value); show(); };
+  show();
+}
+// Combined schedule for every pinned person (group + knockout), sorted by time, with clash flags
+function renderPinnedResults(container){
+  container.innerHTML="";
+  const pins=getPins();
+  const rows=[];
+  collectSchedule().forEach(e=>{
+    const who=[];
+    pins.forEach(p=>{
+      const q=p.toLowerCase(), has=s=>(s||"").toLowerCase().includes(q), roles=[];
+      if(has(e.pairA)||has(e.pairB)) roles.push("Playing");
+      if(has(e.umpire)) roles.push("Umpire");
+      if(has(e.line1)||has(e.line2)) roles.push("Line judge");
+      if(roles.length) who.push({name:p, roles});
+    });
+    if(who.length) rows.push({e, who});
+  });
+  const hd=document.createElement('div'); hd.className="actCount";
+  hd.innerHTML=`📌 Combined schedule for your <b>${pins.length}</b> pinned ${pins.length>1?"people":"person"} — <b>${rows.length}</b> item${rows.length!==1?"s":""}, by time. <span style="color:var(--muted)">(tap a name above to focus one)</span>`;
+  container.appendChild(hd);
+  if(!rows.length){ const n=document.createElement('div'); n.className="note"; n.innerHTML="No scheduled matches yet for your pinned names — they'll appear here as groups and knockout fill in."; container.appendChild(n); return; }
+  rows.sort((a,b)=> a.e.t-b.e.t);
+  // per-person clash: same person, two items at the same time
+  const ppt={}; rows.forEach(r=>{ if(r.e.t<1e9) r.who.forEach(w=>{ (ppt[w.name]=ppt[w.name]||{}); ppt[w.name][r.e.t]=(ppt[w.name][r.e.t]||0)+1; }); });
+  const roleCls=r=>r==="Playing"?"play":(r==="Umpire"?"ump":"line");
+  rows.forEach(({e,who})=>{
+    const clash = e.t<1e9 && who.some(w=>(ppt[w.name][e.t]||0)>1);
+    const r=document.createElement('div'); r.className="actRow"+(clash?" clash":"");
+    r.innerHTML=`<div class="actTime">${e.time?escapeHtml(e.time):"— time —"}${e.court?`<span class="actCourt">${escapeHtml(e.court)}</span>`:""}</div>`+
+      `<div class="actMid"><div class="actMatchup">${escapeHtml(e.pairA||"TBD")} <span class="vs">vs</span> ${escapeHtml(e.pairB||"TBD")}</div>`+
+      `<div class="actStage">${escapeHtml(e.catName)} · ${escapeHtml(e.stage)}${clash?' <span class="clashTag">⚠ time clash</span>':''}</div></div>`+
+      `<div class="actRoles">${who.map(w=>`<span class="actRole ${roleCls(w.roles[0])}" title="${escapeHtml(w.roles.join(', '))}">${escapeHtml(w.name)} · ${escapeHtml(w.roles[0])}</span>`).join("")}</div>`;
+    container.appendChild(r);
+  });
 }
 function renderActResults(container, query){
   container.innerHTML="";
