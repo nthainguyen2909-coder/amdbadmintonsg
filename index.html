@@ -308,7 +308,6 @@
     <button class="btn" onclick="exportJSON()">⬇ Export backup (JSON)</button>
     <label class="btn" style="cursor:pointer">⬆ Import backup<input type="file" id="importFile" accept="application/json" class="hidden" onchange="importJSON(event)"></label>
     <button class="btn" onclick="reseedKnockout()">↻ Re-seed knockout from standings</button>
-    <button class="btn" onclick="autoNumberMatches()">#️⃣ Fill match names (top→bottom)</button>
     <button class="btn pwChangeBtn" onclick="changePassword()">🔑 Change password</button>
     <button class="btn" onclick="reArrangeMatches()">↕ Re-arrange for rest between games</button>
     <button class="btn warn" onclick="resetCat()">⟲ Reset this category</button>
@@ -1715,29 +1714,6 @@ function reArrangeMatches(){
 
 // Auto-fill the "Match name / #" field sequentially, top to bottom:
 // all group matches in group order (A, B, C ...), then knockout ties round by round.
-function autoNumberMatches(){
-  const prefix = prompt("Prefix for match names? (e.g. M, Match, MD) — numbering starts at 1","M");
-  if(prefix===null) return; // cancelled
-  const start = parseInt(prompt("Start numbering from?","1"),10);
-  const base = isNaN(start)?1:start;
-  const cat=DB[currentCat];
-  let n=base;
-  // 1) group matches, group by group, top to bottom
-  cat.groups.forEach(g=>{
-    g.matches.forEach(m=>{ m.name = prefix+n; n++; });
-  });
-  // 2) knockout ties (only real, playable ties), round by round, top to bottom
-  if(cat.knockout){
-    cat.knockout.rounds.forEach(round=>{
-      round.forEach(tie=>{
-        if(bothReal(tie)){ tie.name = prefix+n; n++; }
-      });
-    });
-  }
-  save();
-  render();
-  flash(`Numbered ${n-base} matches`);
-}
 
 /* ===================== BOOT ===================== */
 if(readOnly()) document.body.classList.add('vo');
