@@ -455,6 +455,20 @@ function migrateGroupSets(){
     (DB[k]&&DB[k].groups||[]).forEach(g=> (g.matches||[]).forEach(m=>{ m.sets=normSets(m.sets,GROUP_SETS); }));
   }
   normalizeNames();
+  migrateThird();
+}
+// Ensure every seeded knockout has a 3rd/4th place playoff (losers of the two semifinals),
+// even for older saved data that predates this feature. Runs on every load.
+function migrateThird(){
+  const CODE3={mens:"MD",mixed:"XD",women:"WD"};
+  for(const k in CATS){
+    const ko=DB[k]&&DB[k].knockout;
+    if(ko && ko.rnames && ko.rnames.indexOf("SF")>=0){
+      if(!ko.third){ ko.third={top:null,bot:null,name:CODE3[k]+"-3rd place",time:"",court:"",sets:[[null,null]]}; }
+      else ko.third.sets=normSets(ko.third.sets,1);
+      propagate(k);   // fill it from current semifinal losers
+    }
+  }
 }
 // Standardize the same-person spelling variants wherever they appear in pair names,
 // so each person shows once and search finds all their matches. Runs on every load.
