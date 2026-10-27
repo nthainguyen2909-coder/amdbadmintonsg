@@ -903,7 +903,11 @@ function getPins(){ try{ return JSON.parse(localStorage.getItem("amd_pins")||"[]
 function setPins(a){ try{ localStorage.setItem("amd_pins", JSON.stringify(a)); }catch(e){} }
 function isPinned(n){ n=(n||"").trim().toLowerCase(); return getPins().some(x=>x.toLowerCase()===n); }
 function togglePin(n){ n=(n||"").trim(); if(!n)return; let a=getPins(); if(isPinned(n)) a=a.filter(x=>x.toLowerCase()!==n.toLowerCase()); else a.push(n); setPins(a); }
+// remember the last viewed name across refreshes so a pinned person's schedule stays showing
+function setActQuery(q){ window.__actQuery=q||""; try{ localStorage.setItem("amd_actQuery", window.__actQuery); }catch(e){} }
 function renderActivities(v){
+  if(window.__actQuery==null){ try{ window.__actQuery=localStorage.getItem("amd_actQuery")||""; }catch(e){ window.__actQuery=""; } }
+  if(!(window.__actQuery||"").trim() && getPins().length){ window.__actQuery=getPins()[getPins().length-1]; }  // default to your pin
   const head=document.createElement('div');
   head.innerHTML=`<div class="catTitle">Activities · what everyone should do, and when</div><div class="catMeta">Tap a name (or search) to see that person's full schedule. Pin your name with 📌 for quick access.</div>`;
   v.appendChild(head);
@@ -917,7 +921,7 @@ function renderActivities(v){
     pins.forEach(nm=>{
       const c=document.createElement('button'); c.className="actChip pin"+(curSel===nm.toLowerCase()?" sel":"");
       c.innerHTML=escapeHtml(nm)+' <span class="unpin" title="Unpin">✕</span>';
-      c.onclick=(ev)=>{ if(ev.target.classList.contains('unpin')){ togglePin(nm); render(); } else { window.__actQuery=nm; render(); } };
+      c.onclick=(ev)=>{ if(ev.target.classList.contains('unpin')){ togglePin(nm); render(); } else { setActQuery(nm); render(); } };
       pc.appendChild(c);
     });
     pd.appendChild(pc); v.appendChild(pd);
@@ -933,13 +937,13 @@ function renderActivities(v){
     const chips=document.createElement('div'); chips.className="actChips";
     people.forEach(nm=>{
       const c=document.createElement('button'); c.className="actChip"+(curSel===nm.toLowerCase()?" sel":""); c.textContent=nm;
-      c.onclick=()=>{ window.__actQuery=nm; render(); };
+      c.onclick=()=>{ setActQuery(nm); render(); };
       chips.appendChild(c);
     });
     dir.appendChild(chips); v.appendChild(dir);
   }
   const results=document.createElement('div'); results.className="actResults"; v.appendChild(results);
-  inp.oninput=()=>{ window.__actQuery=inp.value; renderActResults(results, inp.value); };
+  inp.oninput=()=>{ setActQuery(inp.value); renderActResults(results, inp.value); };
   renderActResults(results, inp.value);
 }
 function renderActResults(container, query){
