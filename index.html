@@ -40,6 +40,12 @@
   .actSearch{margin:2px 0 16px}
   .actInput{width:100%;max-width:540px;padding:11px 15px;border:1px solid var(--line);border-radius:11px;font-size:15px;background:#fff;color:var(--txt);box-shadow:var(--shadow)}
   .actInput:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(67,56,202,.12)}
+  .actDir{margin:0 0 16px}
+  .actDirTitle{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:7px}
+  .actChips{display:flex;flex-wrap:wrap;gap:6px;max-height:168px;overflow:auto;padding:2px}
+  .actChip{padding:6px 12px;border:1px solid var(--line);background:#fff;color:var(--txt);border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .actChip:hover{border-color:var(--accent);color:var(--accent)}
+  .actChip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
   .actCount{color:var(--muted);font-size:13px;margin-bottom:10px}
   .actRow{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
   .actRow.clash{border-color:#e6a23c;background:#fff8ec}
@@ -164,6 +170,16 @@
   .champBanner.show{display:block}
   .flash{position:fixed;bottom:18px;right:18px;background:var(--accent2);color:#fff;padding:9px 16px;border-radius:9px;font-weight:700;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;box-shadow:0 6px 20px rgba(16,24,40,.18)}
   .flash.show{opacity:1}
+  /* password dialog */
+  .pwOverlay{position:fixed;inset:0;background:rgba(8,20,24,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .pwBox{background:#fff;border-radius:14px;padding:22px;max-width:340px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .pwTitle{font-weight:800;font-size:16px;margin-bottom:14px;color:var(--txt);font-family:'Plus Jakarta Sans','Inter',sans-serif}
+  .pwInput{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:9px;font-size:16px;letter-spacing:3px;background:#fff;color:var(--txt)}
+  .pwInput:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px rgba(15,118,110,.14)}
+  .pwInput::placeholder{color:#9aa3b2 !important;-webkit-text-fill-color:#9aa3b2 !important;letter-spacing:normal}
+  .pwErr{color:var(--danger);font-size:12.5px;font-weight:600;margin-top:9px}
+  .pwBtns{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  .pwBtns .pwOk{background:var(--accent);color:#fff;border-color:var(--accent)}
   /* read-only / live view mode */
   .liveBadge{display:none;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);border-radius:20px;padding:5px 13px}
   .liveBadge .dot{width:8px;height:8px;border-radius:50%;background:#15803d;box-shadow:0 0 0 0 rgba(21,128,61,.6);animation:pulse 1.8s infinite}
@@ -307,16 +323,33 @@ function cloudPush(){
   pushTimer=setTimeout(()=>{ try{ fbRef.set(JSON.stringify(DB)); }catch(e){} }, 500);  // store as JSON text
 }
 function promptUnlock(){
-  const p = prompt("Enter the scoring password to edit:");
-  if(p===null) return;                               // cancelled -> stay locked
-  if(p===EDIT_PASSWORD){
-    unlocked=true;
-    document.body.classList.remove('vo');
-    document.body.classList.remove('locked');
-    applyCloudMode();                                // switch from viewer to scorer
-    render();
-    flash("Unlocked — you can score");
-  } else { alert("Wrong password — you can view only."); }
+  if(document.getElementById('pwModal')) return;     // already open
+  const ov=document.createElement('div'); ov.id="pwModal"; ov.className="pwOverlay";
+  ov.innerHTML=`<div class="pwBox">
+    <div class="pwTitle">🔒 Enter scoring password</div>
+    <input type="password" class="pwInput" placeholder="Password" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="pwErr" style="display:none">Wrong password — you can only view.</div>
+    <div class="pwBtns"><button class="btn pwCancel">Cancel</button><button class="btn pwOk">Unlock</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const inp=ov.querySelector('.pwInput'), err=ov.querySelector('.pwErr');
+  const close=()=>ov.remove();
+  const submit=()=>{
+    if(inp.value===EDIT_PASSWORD){
+      unlocked=true;
+      document.body.classList.remove('vo');
+      document.body.classList.remove('locked');
+      close();
+      applyCloudMode();                              // switch from viewer to scorer
+      render();
+      flash("Unlocked — you can score");
+    } else { err.style.display="block"; inp.select(); }
+  };
+  ov.querySelector('.pwOk').onclick=submit;
+  ov.querySelector('.pwCancel').onclick=close;
+  ov.onclick=(e)=>{ if(e.target===ov) close(); };     // click backdrop to cancel
+  inp.onkeydown=(e)=>{ if(e.key==="Enter") submit(); else if(e.key==="Escape") close(); };
+  setTimeout(()=>inp.focus(), 50);
 }
 
 function blankMatch(a,b){ return {a,b,name:"",time:"",court:"",umpire:"",line1:"",line2:"",sets:Array.from({length:GROUP_SETS},()=>[null,null])}; }
@@ -822,13 +855,39 @@ function collectSchedule(){
   }
   return out;
 }
+// split a pair name ("Alex / Ben" or "Alex - Ben") into individual people
+function splitPair(name){ return (name||"").split(/\s*\/\s*|\s+-\s+/).map(s=>s.trim()).filter(Boolean); }
+// every unique individual across all pairs + officials
+function collectPeople(){
+  const set=new Set();
+  collectSchedule().forEach(e=>{
+    splitPair(e.pairA).forEach(n=>set.add(n));
+    splitPair(e.pairB).forEach(n=>set.add(n));
+    [e.umpire,e.line1,e.line2].forEach(n=>{ n=(n||"").trim(); if(n) set.add(n); });
+  });
+  return [...set].sort((a,b)=>a.localeCompare(b));
+}
 function renderActivities(v){
   const head=document.createElement('div');
-  head.innerHTML=`<div class="catTitle">Activities · who plays &amp; officiates, and when</div><div class="catMeta">Search a name to see all of that person's matches — playing and officiating — across every category, sorted by time.</div>`;
+  head.innerHTML=`<div class="catTitle">Activities · what everyone should do, and when</div><div class="catMeta">Tap a name (or search) to see that person's full schedule — when they play and when they officiate — across every category, sorted by time.</div>`;
   v.appendChild(head);
   const box=document.createElement('div'); box.className="actSearch";
   const inp=document.createElement('input'); inp.className="actInput"; inp.type="search"; inp.placeholder="🔎 Type a player or official name…"; inp.value=window.__actQuery||"";
   box.appendChild(inp); v.appendChild(box);
+  // people directory — one chip per individual
+  const people=collectPeople();
+  const curSel=(window.__actQuery||"").trim().toLowerCase();
+  if(people.length){
+    const dir=document.createElement('div'); dir.className="actDir";
+    dir.innerHTML=`<div class="actDirTitle">People (${people.length}) — tap a name:</div>`;
+    const chips=document.createElement('div'); chips.className="actChips";
+    people.forEach(nm=>{
+      const c=document.createElement('button'); c.className="actChip"+(curSel===nm.toLowerCase()?" sel":""); c.textContent=nm;
+      c.onclick=()=>{ window.__actQuery=nm; render(); };
+      chips.appendChild(c);
+    });
+    dir.appendChild(chips); v.appendChild(dir);
+  }
   const results=document.createElement('div'); results.className="actResults"; v.appendChild(results);
   inp.oninput=()=>{ window.__actQuery=inp.value; renderActResults(results, inp.value); };
   renderActResults(results, inp.value);
