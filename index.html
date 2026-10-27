@@ -48,6 +48,20 @@
   .attChip.on{background:#ecfdf3;border-color:#86e0a8;color:#14612f}
   .attBox{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:2px solid var(--line);border-radius:5px;font-size:13px;font-weight:800;color:#15803d;flex:0 0 auto}
   .attChip.on .attBox{border-color:#15803d;background:#d7f5e1}
+  body[data-cat="courts"]{--accent:#0369a1}
+  body[data-cat="courts"] header{background:linear-gradient(100deg,#07233a,#0369a1,#2b8fc9)}
+  body[data-cat="courts"] .tab.active{color:#0369a1}
+  .courtGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;align-items:start}
+  .courtCard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+  .courtHd{background:var(--panel2);font-weight:800;color:var(--accent);padding:9px 12px;font-size:13.5px;border-bottom:1px solid var(--line)}
+  .crRow{padding:8px 12px;border-bottom:1px solid #eef1f3}
+  .crRow:last-child{border-bottom:none}
+  .crTop{display:flex;align-items:baseline;gap:8px}
+  .crTime{font-weight:800;font-variant-numeric:tabular-nums;color:#0f172a;font-size:13px;min-width:42px}
+  .crTag{font-weight:700;font-size:11.5px;color:var(--muted)}
+  .crPair{font-size:13.5px;font-weight:600;margin-top:2px;color:#1f2a33}
+  .crVs{color:var(--muted);font-weight:400;font-size:11px;margin:0 3px}
+  .crOff{font-size:11.5px;color:var(--muted);margin-top:2px}
   /* activities view */
   .actSearch{margin:2px 0 16px}
   .actInput{width:100%;max-width:540px;padding:11px 15px;border:1px solid var(--line);border-radius:11px;font-size:15px;background:#fff;color:var(--txt);box-shadow:var(--shadow)}
@@ -915,6 +929,7 @@ function render(){
   v.innerHTML="";
   if(currentCat==="activities"){ renderActivities(v); return; }
   if(currentCat==="attendance"){ renderAttendance(v); return; }
+  if(currentCat==="courts"){ renderCourts(v); return; }
   const cfg=CATS[currentCat], cat=DB[currentCat];
   const q=cfg.groups*cfg.qualifiersPerGroup;
   const head=document.createElement('div');
@@ -1004,6 +1019,11 @@ function renderTabs(){
   nb.textContent="✅ Attendance";
   nb.onclick=()=>{currentCat="attendance";render();};
   t.appendChild(nb);
+  const cb=document.createElement('button');
+  cb.className="tab"+(currentCat==="courts"?" active":"");
+  cb.textContent="🏟️ Courts";
+  cb.onclick=()=>{currentCat="courts";render();};
+  t.appendChild(cb);
 }
 
 /* ===================== ATTENDANCE (check-in) ===================== */
@@ -1073,6 +1093,44 @@ function renderAttendance(v){
     refreshCounts();
   }
   search.oninput=draw; draw();
+}
+
+/* ===================== COURT SCHEDULE ===================== */
+function renderCourts(v){
+  const items=collectSchedule().filter(e=>e.court);
+  // include 3rd-place matches (not part of collectSchedule)
+  for(const k in CATS){ const ko=DB[k]&&DB[k].knockout;
+    if(ko&&ko.third&&ko.third.time&&ko.third.court){ const t=ko.third, rn=s=>isRef(s)?"":s;
+      items.push({catName:CATS[k].name, stage:"3rd place", name:t.name||"", time:t.time||"", court:t.court,
+        pairA:(t.top&&!t.top.bye)?rn(t.top.name||""):"", pairB:(t.bot&&!t.bot.bye)?rn(t.bot.name||""):"",
+        umpire:t.umpire||"", line1:t.line1||"", line2:t.line2||"", t:parseTime(t.time)}); } }
+  const byCourt={};
+  items.forEach(e=>{ const c=(String(e.court).match(/\d+/)||["?"])[0]; (byCourt[c]=byCourt[c]||[]).push(e); });
+  const courts=Object.keys(byCourt).sort((a,b)=>(a==="?"?1e9:+a)-(b==="?"?1e9:+b));
+
+  const head=document.createElement('div'); head.className="actHead";
+  head.innerHTML=`<div class="actTitle">🏟️ Court schedule</div><div class="actSub">Every match on each court, in time order · ${courts.length} courts, ${items.length} matches.</div>`;
+  v.appendChild(head);
+
+  const grid=document.createElement('div'); grid.className="courtGrid";
+  courts.forEach(c=>{
+    const list=byCourt[c].sort((a,b)=>a.t-b.t);
+    const card=document.createElement('div'); card.className="courtCard";
+    const hd=document.createElement('div'); hd.className="courtHd"; hd.textContent="🏟️ Court "+c+" · "+list.length+" matches";
+    card.appendChild(hd);
+    list.forEach(e=>{
+      const off=[e.umpire?('🧑‍⚖️ '+escapeHtml(e.umpire)):'',
+                 (e.line1||e.line2)?('🚩 '+[e.line1,e.line2].filter(Boolean).map(escapeHtml).join(', ')):''].filter(Boolean).join(' · ');
+      const row=document.createElement('div'); row.className="crRow";
+      row.innerHTML=`<div class="crTop"><span class="crTime">${escapeHtml(e.time||'—')}</span>`
+        +`<span class="crTag">${escapeHtml(e.name||'')} · ${escapeHtml(e.catName)} ${escapeHtml(e.stage)}</span></div>`
+        +`<div class="crPair">${e.pairA?pairNameHTML(e.pairA):'<span class="muted">—</span>'} <span class="crVs">vs</span> ${e.pairB?pairNameHTML(e.pairB):'<span class="muted">—</span>'}</div>`
+        +(off?`<div class="crOff">${off}</div>`:'');
+      card.appendChild(row);
+    });
+    grid.appendChild(card);
+  });
+  v.appendChild(grid);
 }
 
 /* ===================== ACTIVITIES (combined schedule) ===================== */
