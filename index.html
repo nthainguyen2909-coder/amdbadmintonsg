@@ -69,7 +69,8 @@
   .ctTimeH{font-weight:800;color:#0f172a;background:#fafbfc !important;white-space:nowrap;position:sticky;left:0;z-index:1;text-align:center}
   .ctTbl th.ctTimeH{z-index:3;color:var(--accent)} .ctTbl td.ctTimeH{z-index:2}
   .ctCell.cat-md{background:#eaf1ff} .ctCell.cat-xd{background:#e9f8ee} .ctCell.cat-wd{background:#fdecf4}
-  .ctCell.st-empty{background:#fcfdfe}
+  .ctCell.st-empty{background:#fbfefc}
+  .ctFree{font-size:10px;font-style:italic;color:#8aa0ad;line-height:1.2;text-align:center}
   .ctCell.st-done{box-shadow:inset 4px 0 0 #1f9d55} .ctCell.st-live{box-shadow:inset 4px 0 0 #e08b00}
   .ctDot{display:inline-block;margin-right:3px;font-size:9px;vertical-align:middle} .ctDot.done{color:#1f9d55} .ctDot.live{color:#e08b00}
   .ctLegend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;font-size:10.5px;align-items:center}
@@ -84,6 +85,8 @@
   .ctPair{font-size:10.5px;line-height:1.25;color:#1f2a33;margin-top:1px}
   .ctScore{font-weight:800;font-size:11px;margin-top:1px;color:#0f172a}
   .ctW{color:#14612f;font-weight:800}
+  .actUpdate{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 12px}
+  .actUpdateHint{font-size:11.5px;color:var(--muted);max-width:420px}
   .crRow.st-done{border-left:3px solid #16a34a}
   .crRow.st-live{border-left:3px solid #e6a23c;background:#fffaf0}
   .crBadge{margin-left:auto;font-size:10px;font-weight:800;padding:1px 8px;border-radius:999px;white-space:nowrap}
@@ -257,6 +260,10 @@
   .finalCol::after{content:"";position:absolute;left:100%;top:50%;width:30px;height:3px;background:#334155}
   .bHalf .round:last-child .matchWrap{margin-right:0}
   .bHalf .round:last-child .matchWrap::after{content:"";position:absolute;left:100%;top:50%;width:14px;height:3px;background:#334155}
+  /* keep every bracket box the SAME height so SF/QF/Final centers line up and the connectors don't kink:
+     clip the match-details header to a single line (officials etc. stay visible in Courts/Activities). */
+  .tie .koHdr{align-items:center;flex-wrap:nowrap}
+  .tie .koHdr .matchSum{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
   .thirdBox{margin-top:18px;max-width:270px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2)}
   .thirdBox .rhd{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
   .tie{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}
@@ -983,6 +990,45 @@ function reseedKnockout(){
   render();
   flash("Knockout seeded");
 }
+// Refresh EVERY category's knockout from the current group standings, without clearing any
+// knockout scores already entered. Eliminated pairs drop off; current qualifiers fill in.
+// Used by the "Update tasks from results" button on the Activities tab.
+function updateActivitiesFromResults(){
+  refreshAllKnockouts();
+  save();
+  render();
+  flash("Tasks updated from results");
+}
+// Re-derive EVERY category's knockout from current standings (names/seeds only) + propagate winners,
+// WITHOUT clearing scores and WITHOUT saving/rendering. Called at the top of the Activities and Courts
+// tabs so a person's knockout matches are always live-current the moment you look — no button needed.
+// Seeded draws (MD/XD) refill from the live order of merit; manual first-round picks are preserved.
+function catHasGroupResults(k){
+  return (DB[k].groups||[]).some(g=>(g.matches||[]).some(m=>m.sets&&m.sets.some(s=>s&&(s[0]!=null||s[1]!=null))));
+}
+function refreshAllKnockouts(){
+  // Only auto-seed a category's knockout once its group stage has real results — seeding from all-tied
+  // (empty) standings produces a degenerate bracket with duplicate pairs / false clashes.
+  for(const k in CATS){ if(DB[k] && DB[k].knockout && catHasGroupResults(k)){ buildKnockout(k, false); propagate(k); } }
+}
+// One-time manual re-base: slide only the UPCOMING (unplayed) matches so the next one starts at the
+// current clock time. Matches that already have a score keep their recorded times (history preserved).
+// Not a live sync — click again later if the event falls further behind.
+function syncScheduleToNow(){
+  const fmt=x=>{ x=((Math.round(x)%1440)+1440)%1440; return Math.floor(x/60)+":"+String(x%60).padStart(2,'0'); };
+  const played=o=> o && o.sets && o.sets.some(s=>s&&(s[0]!=null||s[1]!=null));
+  const items=[];
+  for(const k in CATS){ (DB[k].groups||[]).forEach(g=>(g.matches||[]).forEach(m=>items.push(m)));
+    const ko=DB[k].knockout; if(ko){ ko.rounds.forEach(r=>r.forEach(t=>items.push(t))); if(ko.third) items.push(ko.third); } }
+  let anchor=Infinity;
+  items.forEach(o=>{ if(o.time && !played(o)){ const m=parseTime(o.time); if(m!=null&&m<anchor) anchor=m; } });
+  if(!isFinite(anchor)){ alert("No upcoming matches to sync — every scheduled match already has a score."); return; }
+  const now=new Date(), nowMin=now.getHours()*60+now.getMinutes(), off=nowMin-anchor;
+  if(off===0){ flash("Next match already starts now ("+fmt(nowMin)+")"); return; }
+  if(!confirm("Slide all UPCOMING (unplayed) matches by "+(off>=0?"+":"")+off+" min so the next one starts now ("+fmt(nowMin)+")?\n\nAlready-played matches keep their recorded times. (Tip: export a backup first.)")) return;
+  items.forEach(o=>{ if(o.time && !played(o)){ const m=parseTime(o.time); if(m!=null) o.time=fmt(m+off); } });
+  save(); render(); flash("Upcoming matches synced — next now "+fmt(nowMin));
+}
 // <select> options for a first-round slot: empty, BYE, then every qualifier (A1, A2, ... by group).
 function drawOptions(catKey, current){
   const cfg=CATS[catKey];
@@ -1221,6 +1267,7 @@ function renderAttendance(v){
 
 /* ===================== COURT SCHEDULE ===================== */
 function renderCourts(v){
+  refreshAllKnockouts();   // always reflect the latest results across every category
   const items=collectSchedule().filter(e=>e.court);
   // include 3rd-place matches (not part of collectSchedule)
   for(const k in CATS){ const ko=DB[k]&&DB[k].knockout;
@@ -1249,6 +1296,13 @@ function renderCourts(v){
   }
   v.appendChild(cban);
 
+  if(!readOnly()){
+    const sync=document.createElement('div'); sync.className="actUpdate";
+    sync.innerHTML=`<button class="btn" onclick="syncScheduleToNow()">🕐 Sync schedule to now</button>`
+      +`<span class="actUpdateHint">Slides the upcoming (unplayed) matches so the next one starts at the current clock time — use if the event runs behind. Already-played matches keep their recorded times. One-time; click again if it falls further behind.</span>`;
+    v.appendChild(sync);
+  }
+
   function catClass(cn){ cn=cn||""; if(/Women/.test(cn))return"wd"; if(/Mixed/.test(cn))return"xd"; if(/Men/.test(cn))return"md"; return""; }
   function cellInfo(e){
     if(!e) return {cls:"empty",cat:"",html:""};
@@ -1264,9 +1318,16 @@ function renderCourts(v){
     return {cls,cat:catClass(e.catName),html};
   }
   const thead=`<tr><th class="ctTimeH">Time</th>${courts.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr>`;
-  const tbody=times.map(t=>`<tr><td class="ctTimeH">${escapeHtml(t)}</td>`
-    +courts.map(c=>{ const ci=cellInfo(cellAt[t+"|"+c]); return `<td class="ctCell cat-${ci.cat} st-${ci.cls}">${ci.html}</td>`; }).join("")
-    +`</tr>`).join("");
+  // During the knockout stage only 6 of the 10 courts are used, so the rest are genuinely free.
+  // Flag empty courts from the first knockout slot onward as open for a friendly match.
+  // (Round-robin idle slots are NOT flagged — they may still be used for pulled matches.)
+  const koStart=parseTime("14:48");
+  const tbody=times.map(t=>{ const tm=parseTime(t); const spare=(tm!=null&&tm>=koStart);
+    return `<tr><td class="ctTimeH">${escapeHtml(t)}</td>`
+    +courts.map(c=>{ const cell=cellAt[t+"|"+c];
+        if(!cell) return `<td class="ctCell st-empty">${spare?'<div class="ctFree">🏸 Free — ready for friendly play</div>':''}</td>`;
+        const ci=cellInfo(cell); return `<td class="ctCell cat-${ci.cat} st-${ci.cls}">${ci.html}</td>`; }).join("")
+    +`</tr>`; }).join("");
   const wrap=document.createElement('div'); wrap.className="ctGridWrap";
   wrap.innerHTML=`<table class="ctTbl">${thead}${tbody}</table>`;
   v.appendChild(wrap);
@@ -1360,10 +1421,17 @@ function togglePin(n){ n=(n||"").trim(); if(!n)return; let a=getPins(); if(isPin
 // remember the last viewed name across refreshes so a pinned person's schedule stays showing
 function setActQuery(q){ window.__actQuery=q||""; try{ localStorage.setItem("amd_actQuery", window.__actQuery); }catch(e){} }
 function renderActivities(v){
+  refreshAllKnockouts();   // always reflect the latest results across every category
   if(window.__actQuery==null){ try{ window.__actQuery=localStorage.getItem("amd_actQuery")||""; }catch(e){ window.__actQuery=""; } }
   const head=document.createElement('div');
   head.innerHTML=`<div class="catTitle">Activities · what everyone should do, and when</div><div class="catMeta">Tap a name (or search) to see one person. Pin names with 📌 to watch several at once — their matches (group + knockout) all show together.</div>`;
   v.appendChild(head);
+  if(!readOnly()){
+    const upd=document.createElement('div'); upd.className="actUpdate";
+    upd.innerHTML=`<button class="btn" onclick="updateActivitiesFromResults()">🔄 Update tasks from results</button>`
+      +`<span class="actUpdateHint">Refreshes the knockout from the latest group standings — eliminated pairs drop off, qualifiers appear. Scores already entered are kept.</span>`;
+    v.appendChild(upd);
+  }
   const curSel=(window.__actQuery||"").trim().toLowerCase();
   // 📌 pinned quick-access row
   const pins=getPins();
@@ -1841,12 +1909,9 @@ function renderTie(catKey,ri,ti,tie,isFinal){
     }
     el.appendChild(slot);
   });
-  if(isFinal){
-    const w2=tieWinner(tie);
-    const champ=document.createElement('div'); champ.className="champ";
-    champ.textContent = (w2&&w2.name)?("🏆 "+w2.name):"Final";
-    el.appendChild(champ);
-  }
+  // NOTE: no in-box "Final"/champion slot here — it made the final box taller than the
+  // semifinal boxes, so the SF→Final connector attached lower and overlapped the box.
+  // The column header already reads "FINAL" and the champion is shown in the banner below.
   return el;
 }
 function bothReal(tie){ return tie.top&&tie.bot&&!tie.top.bye&&!tie.bot.bye&&tie.top.name!==undefined&&tie.bot.name!==undefined; }
