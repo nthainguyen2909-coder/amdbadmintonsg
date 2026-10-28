@@ -27,13 +27,13 @@
   .amdArrow{height:19px;width:19px;fill:#fff;display:block}
   /* per-category accent theming (changes with the active tab) */
   body[data-cat="mens"]{--accent:#1d4ed8}
-  body[data-cat="mens"]  header{background:linear-gradient(100deg,#0a1b4a,#1d4ed8,#3b82f6)}
+  body[data-cat="mens"]  header{background:linear-gradient(100deg,#04173a,#0d47a1,#1769cf)}
   body[data-cat="mens"] .tab.active{color:#1d4ed8}
   body[data-cat="mixed"]{--accent:#b4530a}
-  body[data-cat="mixed"] header{background:linear-gradient(100deg,#3a1d02,#b4530a,#d9892b)}
+  body[data-cat="mixed"] header{background:linear-gradient(100deg,#3d1b00,#a84d05,#cf7212)}
   body[data-cat="mixed"] .tab.active{color:#b4530a}
   body[data-cat="women"]{--accent:#be185d}
-  body[data-cat="women"] header{background:linear-gradient(100deg,#3a0820,#be185d,#e0629a)}
+  body[data-cat="women"] header{background:linear-gradient(100deg,#3f0719,#b01347,#d13d6c)}
   body[data-cat="women"] .tab.active{color:#be185d}
   body[data-cat="activities"]{--accent:#4338ca}
   body[data-cat="activities"] header{background:linear-gradient(100deg,#0e1030,#4338ca,#5b52e0)}
@@ -244,10 +244,13 @@
   .roundBody{flex:1;display:flex;flex-direction:column}
   .matchWrap{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;margin-right:28px}
   .round:last-child .matchWrap{margin-right:0}
+  /* --koOff nudges every connector down by half the match-info header height when that header is shown,
+     so the line lands in the gap BETWEEN the two pairs instead of across the top pair's row. */
+  body{--koOff:14px} body.hideKoHdr{--koOff:0px}
   /* connector elbows: each match links to the midpoint between the pair, then into the next round */
-  .round:not(:last-child) .matchWrap:nth-child(odd)::after{content:"";position:absolute;left:100%;top:50%;width:14px;height:50%;border-right:3px solid #334155;border-top:3px solid #334155}
-  .round:not(:last-child) .matchWrap:nth-child(even)::after{content:"";position:absolute;left:100%;top:0;width:14px;height:50%;border-right:3px solid #334155;border-bottom:3px solid #334155}
-  .round:not(:first-child) .matchWrap::before{content:"";position:absolute;left:-14px;top:50%;width:14px;height:3px;background:#334155}
+  .round:not(:last-child) .matchWrap:nth-child(odd)::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:14px;height:calc(50% - var(--koOff,0px));border-right:3px solid #334155;border-top:3px solid #334155}
+  .round:not(:last-child) .matchWrap:nth-child(even)::after{content:"";position:absolute;left:100%;top:0;width:14px;height:calc(50% + var(--koOff,0px));border-right:3px solid #334155;border-bottom:3px solid #334155}
+  .round:not(:first-child) .matchWrap::before{content:"";position:absolute;left:-14px;top:calc(50% + var(--koOff,0px));width:14px;height:3px;background:#334155}
   /* centered / mirrored bracket: left half | Final | right half */
   .bracketCentered{display:flex;overflow-x:auto;padding:6px 0}
   .bracketInner{display:flex;align-items:center;margin:0 auto}   /* centers when it fits, scrolls to R16 when wider than screen */
@@ -258,10 +261,10 @@
   .finalCol{position:relative;display:flex;flex-direction:column;justify-content:center;flex:1}
   .finalCol .matchWrap{margin-right:0;margin-left:0}
   .finalCol .tie{width:100%;border-color:#e8cd79;box-shadow:0 2px 10px rgba(180,140,20,.25)}
-  .finalCol::before{content:"";position:absolute;right:100%;top:50%;width:30px;height:3px;background:#334155}
-  .finalCol::after{content:"";position:absolute;left:100%;top:50%;width:30px;height:3px;background:#334155}
+  .finalCol::before{content:"";position:absolute;right:100%;top:calc(50% + var(--koOff,0px));width:30px;height:3px;background:#334155}
+  .finalCol::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:30px;height:3px;background:#334155}
   .bHalf .round:last-child .matchWrap{margin-right:0}
-  .bHalf .round:last-child .matchWrap::after{content:"";position:absolute;left:100%;top:50%;width:14px;height:3px;background:#334155}
+  .bHalf .round:last-child .matchWrap::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:14px;height:3px;background:#334155}
   /* keep every bracket box the SAME height so SF/QF/Final centers line up and the connectors don't kink:
      clip the match-details header to a single line (officials etc. stay visible in Courts/Activities). */
   .tie .koHdr{align-items:center;flex-wrap:nowrap}
