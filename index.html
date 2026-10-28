@@ -721,16 +721,15 @@ function resolveTie(block, group){
     const sub=block.slice(i,j);
     if(sub.length===1){ out=out.concat(sub); }
     else if(sub.length===block.length){
-      // head-to-head could not separate anyone (e.g. circular A>B>C>A) -> Step 5 total points
-      sub.sort((a,b)=> (b.pf-a.pf) || a.name.localeCompare(b.name));
-      // Step 6: a genuine dead-heat needs a committee draw. Only flag once every tied pair
-      // has finished all its group matches (otherwise it's just an in-progress / empty tie).
+      // head-to-head could not separate anyone (e.g. circular A>B>C>A) -> Step 5 total points,
+      // then Step 6: the tied pairs draw lots among themselves (flagged ⚖). Stable fallback order.
+      sub.sort((a,b)=> (b.pf-a.pf) || a.id.localeCompare(b.id));
       const expected = group.pairs.length - 1;
       const allComplete = sub.every(x=>x.played===expected && expected>0);
       if(allComplete){
         for(let k=0;k<sub.length;k++){
           const same=sub.filter(x=>x.pf===sub[k].pf);
-          if(same.length>1) sub[k].lots=true;
+          if(same.length>1) sub[k].lots=true;   // still exactly equal on points -> draw lots
         }
       }
       out=out.concat(sub);
@@ -1053,9 +1052,9 @@ function render(){
       <code>3</code> point differential (Pt±) →
       <code>4</code> head-to-head (winner of the direct match) →
       <code>5</code> total points scored (Pts+) →
-      <code>6</code> drawing lots by the committee <span style="color:var(--gold)">⚖</span>.
+      <code>6</code> drawing lots by the tied pairs themselves <span style="color:var(--gold)">⚖</span>.
       Top ${CATS[currentCat].qualifiersPerGroup} of each group advance (shown with ✓).
-      <br><span style="color:var(--muted)">If head-to-head forms a loop (e.g. <b>A beats B, B beats C, C beats A</b>), it can't separate the tied pairs — ranking then continues to step 5 (total points), and if still equal, step 6 (draw lots <span style="color:var(--gold)">⚖</span>).</span>
+      <br><span style="color:var(--muted)">If head-to-head forms a loop (e.g. <b>A beats B, B beats C, C beats A</b>), it can't separate the tied pairs — ranking continues to step 5 (total points), and if they're still exactly equal the tied pairs <b>draw lots among themselves</b> (flagged <span style="color:var(--gold)">⚖</span>).</span>
     </div>`;
   v.appendChild(legend);
   const grid=document.createElement('div'); grid.className="groupGrid";
@@ -1476,7 +1475,7 @@ function renderGroup(g,gi){
     const q=qSet.has(r.id);
     const d=(r.diff>0?"+":"")+r.diff, gd=(r.gameDiff>0?"+":"")+r.gameDiff;
     html+=`<tr class="${q?'q':''}"><td><span class="posbadge">${i+1}</span></td>
-      <td class="name" data-id="${r.id}">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — committee must draw lots">⚖ draw</span>':''}</td>
+      <td class="name" data-id="${r.id}">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — the tied pairs draw lots among themselves">⚖ draw</span>':''}</td>
       <td><b>${r.wins}</b></td><td>${r.losses}</td>
       <td>${r.setW}-${r.setL}</td><td>${gd}</td><td>${d}</td><td>${r.pf}</td></tr>`;
   });
@@ -1589,7 +1588,7 @@ function updateStandingsTables(){
     if(!tbody)return;
     tbody.innerHTML=st.map((r,i)=>`<tr class="${qSet.has(r.id)?'q':''}">
       <td><span class="posbadge">${i+1}</span></td>
-      <td class="name">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — committee must draw lots">⚖ draw</span>':''}</td>
+      <td class="name">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — the tied pairs draw lots among themselves">⚖ draw</span>':''}</td>
       <td><b>${r.wins}</b></td><td>${r.losses}</td>
       <td>${r.setW}-${r.setL}</td><td>${(r.gameDiff>0?"+":"")+r.gameDiff}</td><td>${(r.diff>0?"+":"")+r.diff}</td><td>${r.pf}</td></tr>`).join("");
     // update winner highlight on match rows
