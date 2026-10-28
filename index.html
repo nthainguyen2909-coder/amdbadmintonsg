@@ -68,14 +68,14 @@
   .ctTbl td{border:1px solid #eef1f3;padding:4px 6px;vertical-align:top;min-width:96px;max-width:140px}
   .ctTimeH{font-weight:800;color:#0f172a;background:#fafbfc !important;white-space:nowrap;position:sticky;left:0;z-index:1;text-align:center}
   .ctTbl th.ctTimeH{z-index:3;color:var(--accent)} .ctTbl td.ctTimeH{z-index:2}
-  .ctCell.cat-md{background:#f2f7fe} .ctCell.cat-xd{background:#f1fbf4} .ctCell.cat-wd{background:#fdf4f9}
+  .ctCell.cat-md{background:#edf8f0} .ctCell.cat-xd{background:#fdf3ea} .ctCell.cat-wd{background:#f4edfb}
   .ctCell.st-empty{background:#fbfefc}
   .ctFree{font-size:10px;font-style:italic;color:#8aa0ad;line-height:1.2;text-align:center}
   .ctCell.st-done{box-shadow:inset 4px 0 0 #1f9d55} .ctCell.st-live{box-shadow:inset 4px 0 0 #e08b00}
   .ctDot{display:inline-block;margin-right:3px;font-size:9px;vertical-align:middle} .ctDot.done{color:#1f9d55} .ctDot.live{color:#e08b00}
   .ctLegend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;font-size:10.5px;align-items:center}
   .ctKey{padding:2px 8px;border-radius:999px;font-weight:800;color:#0f172a}
-  .ctKey.cat-md{background:#cfe0ff} .ctKey.cat-xd{background:#cdeecf} .ctKey.cat-wd{background:#f6cfe1}
+  .ctKey.cat-md{background:#c6e9cd} .ctKey.cat-xd{background:#f8d9b2} .ctKey.cat-wd{background:#ddc9f2}
   .ctKeyDot{color:var(--muted);font-weight:700}
   .confBan{margin:8px 0;padding:9px 13px;border-radius:10px;font-size:12.5px;line-height:1.4}
   .confBan.ok{background:#eefaf0;border:1px solid #bfe6c8;color:#14612f}
@@ -264,6 +264,7 @@
      clip the match-details header to a single line (officials etc. stay visible in Courts/Activities). */
   .tie .koHdr{align-items:center;flex-wrap:nowrap}
   .tie .koHdr .matchSum{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+  body.hideKoHdr .tie .koHdr{display:none}   /* "Hide match details" toggle: cleaner bracket boxes */
   .thirdBox{margin-top:18px;max-width:270px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2)}
   .thirdBox .rhd{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
   .tie{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden;box-shadow:var(--shadow)}
@@ -1011,6 +1012,9 @@ function refreshAllKnockouts(){
   // (empty) standings produces a degenerate bracket with duplicate pairs / false clashes.
   for(const k in CATS){ if(DB[k] && DB[k].knockout && catHasGroupResults(k)){ buildKnockout(k, false); propagate(k); } }
 }
+// "Hide match info" toggle for the bracket boxes (per-device, remembered)
+function koHdrHidden(){ try{ return localStorage.getItem("amd_hideKoHdr")==="1"; }catch(e){ return false; } }
+function setKoHdrHidden(v){ try{ localStorage.setItem("amd_hideKoHdr", v?"1":"0"); }catch(e){} document.body.classList.toggle('hideKoHdr', !!v); render(); }
 // One-time manual re-base: slide only the UPCOMING (unplayed) matches so the next one starts at the
 // current clock time. Matches that already have a score keep their recorded times (history preserved).
 // Not a live sync — click again later if the event falls further behind.
@@ -1093,6 +1097,7 @@ function propagate(catKey){
 /* ===================== RENDER ===================== */
 function render(){
   document.body.setAttribute('data-cat', currentCat);   // drives the per-category accent color
+  document.body.classList.toggle('hideKoHdr', koHdrHidden());   // apply the "hide match info" preference
   renderTabs();
   const v=document.getElementById('view');
   v.innerHTML="";
@@ -1138,6 +1143,11 @@ function render(){
   // KNOCKOUT
   const kHd=document.createElement('div'); kHd.className="sectionHd koHd";
   kHd.innerHTML=`<span>Knockout Stage</span>`;
+  // toggle: hide the match-details header row inside each bracket box (cleaner tree)
+  const hideBtn=document.createElement('button'); hideBtn.className="btn koHideBtn";
+  hideBtn.textContent = koHdrHidden() ? "👁 Show match info" : "🙈 Hide match info";
+  hideBtn.onclick=()=> setKoHdrHidden(!koHdrHidden());
+  kHd.appendChild(hideBtn);
   const rns = cat.knockout ? cat.knockout.rnames : roundNames(firstRoundSize(currentCat));
   koRoundSetsMap(currentCat);
   if(!readOnly()){
