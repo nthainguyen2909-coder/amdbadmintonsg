@@ -68,14 +68,14 @@
   .ctTbl td{border:1px solid #eef1f3;padding:4px 6px;vertical-align:top;min-width:96px;max-width:140px}
   .ctTimeH{font-weight:800;color:#0f172a;background:#fafbfc !important;white-space:nowrap;position:sticky;left:0;z-index:1;text-align:center}
   .ctTbl th.ctTimeH{z-index:3;color:var(--accent)} .ctTbl td.ctTimeH{z-index:2}
-  .ctCell.cat-md{background:#edf8f0} .ctCell.cat-xd{background:#fdf3ea} .ctCell.cat-wd{background:#f4edfb}
+  .ctCell.cat-md{background:#eaf2fc} .ctCell.cat-xd{background:#fdf3ea} .ctCell.cat-wd{background:#fdeef5}
   .ctCell.st-empty{background:#fbfefc}
   .ctFree{font-size:10px;font-style:italic;color:#8aa0ad;line-height:1.2;text-align:center}
   .ctCell.st-done{box-shadow:inset 4px 0 0 #1f9d55} .ctCell.st-live{box-shadow:inset 4px 0 0 #e08b00}
   .ctDot{display:inline-block;margin-right:3px;font-size:9px;vertical-align:middle} .ctDot.done{color:#1f9d55} .ctDot.live{color:#e08b00}
   .ctLegend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;font-size:10.5px;align-items:center}
   .ctKey{padding:2px 8px;border-radius:999px;font-weight:800;color:#0f172a}
-  .ctKey.cat-md{background:#c6e9cd} .ctKey.cat-xd{background:#f8d9b2} .ctKey.cat-wd{background:#ddc9f2}
+  .ctKey.cat-md{background:#cde0fb} .ctKey.cat-xd{background:#f8d9b2} .ctKey.cat-wd{background:#f6cfe1}
   .ctKeyDot{color:var(--muted);font-weight:700}
   .confBan{margin:8px 0;padding:9px 13px;border-radius:10px;font-size:12.5px;line-height:1.4}
   .confBan.ok{background:#eefaf0;border:1px solid #bfe6c8;color:#14612f}
@@ -334,13 +334,13 @@
     .groupGrid{grid-template-columns:1fr}
     .scoreCell{min-width:120px}
     main{padding:12px}
-    header{padding:11px 14px;gap:10px}
-    header h1{font-size:16px;letter-spacing:.3px}
-    header .sub{font-size:10.5px}
-    .amdLogo{padding:6px 9px;gap:4px}
-    .amdLogo .amdTxt{font-size:17px}
-    .amdArrow{height:15px;width:15px}
-    .tab{padding:6px 11px;font-size:12px}
+    header{padding:7px 11px;gap:7px}
+    header h1{font-size:13.5px;letter-spacing:.2px}
+    header .sub{display:none}            /* hide the subtitle on phones to keep the header compact */
+    .amdLogo{padding:4px 7px;gap:3px}
+    .amdLogo .amdTxt{font-size:13px}
+    .amdArrow{height:11px;width:11px}
+    .tab{padding:5px 9px;font-size:11.5px}
     /* standings: let the wide table scroll instead of squashing/overlapping names */
     .group{overflow-x:auto}
     .standings{min-width:420px}
@@ -1013,7 +1013,7 @@ function refreshAllKnockouts(){
   for(const k in CATS){ if(DB[k] && DB[k].knockout && catHasGroupResults(k)){ buildKnockout(k, false); propagate(k); } }
 }
 // "Hide match info" toggle for the bracket boxes (per-device, remembered)
-function koHdrHidden(){ try{ return localStorage.getItem("amd_hideKoHdr")==="1"; }catch(e){ return false; } }
+function koHdrHidden(){ try{ const v=localStorage.getItem("amd_hideKoHdr"); return v===null ? true : v==="1"; }catch(e){ return true; } }   // default HIDDEN so SF→Final connectors sit between the pairs
 function setKoHdrHidden(v){ try{ localStorage.setItem("amd_hideKoHdr", v?"1":"0"); }catch(e){} document.body.classList.toggle('hideKoHdr', !!v); render(); }
 // One-time manual re-base: slide only the UPCOMING (unplayed) matches so the next one starts at the
 // current clock time. Matches that already have a score keep their recorded times (history preserved).
