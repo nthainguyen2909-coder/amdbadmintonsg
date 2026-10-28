@@ -811,7 +811,13 @@ function renderSeedTable(catKey){
         +`<td class="sName">${escapeHtml(s.name||"—")}</td>`+cell(s)+`</tr>`; }).join("");
     box.innerHTML=`<div class="seedHd">🏅 Order of merit — top ${limit} (${seeds.length} qualify · 4 branches)</div>
       <table class="seedTbl"><thead><tr><th>#</th><th>Br</th><th>Pair</th>${headCols}</tr></thead><tbody>${rows}</tbody></table>`
-      +`<div class="seedNote">Ranked by overall record using <b>per-match averages</b> (Win% → G±/game → Pt±/game → Pts/game), so a 3-pair group (2 games each) is judged on the <b>same standard</b> as a 4-pair group (3 games). The <b>top 4 seeds (branch anchors) always come from 4 different groups</b> — the best pair from each — then they spread across the bracket so seeds 1 and 2 can only meet in the Final.</div>`;
+      +`<div class="seedNote">Ranked by overall record using <b>per-match averages</b>, so a 3-pair group (2 games each) is judged on the <b>same standard</b> as a 4-pair group (3 games). Each stat divides by <b>matches played (g)</b>:
+        <br>• <b>Win%</b> = matches won ÷ played × 100
+        <br>• <b>G±/g</b> = (games won − games lost) ÷ played
+        <br>• <b>Pt±/g</b> = (points scored − points conceded) ÷ played
+        <br>• <b>Pts/g</b> = points scored ÷ played
+        <br>Order: Win% → G±/g → Pt±/g → Pts/g. <b>Example:</b> a 3-0 pair in a 4-team group (G±&nbsp;+3 over 3 games = +1.0/g) ties a 2-0 pair in a 3-team group (+2 over 2 = +1.0/g) — fair.
+        <br>The <b>top 4 seeds (branch anchors) always come from 4 different groups</b> (best pair of each), then spread so seeds 1 and 2 can only meet in the Final.</div>`;
   } else {
     const seeds=overallSeeds(catKey), n=seeds.length;
     const rows=seeds.map((s,i)=>`<tr><td class="sNo">${i+1}</td><td class="sName">${escapeHtml(s.name||"—")}</td>`+cell(s)+`</tr>`).join("");
