@@ -227,9 +227,10 @@
   .bHalf{display:flex}
   .bRight{transform:scaleX(-1)}
   .bRight .tie{transform:scaleX(-1)}          /* un-mirror the text in the right half */
-  .finalColWrap{display:flex;flex-direction:column;align-items:center;margin:0 30px}
+  .finalColWrap{display:flex;flex-direction:column;align-items:stretch;margin:0 30px;width:230px;flex:0 0 230px}
   .finalCol{position:relative;display:flex;flex-direction:column;justify-content:center;flex:1}
-  .finalCol .tie{border-color:#e8cd79;box-shadow:0 2px 10px rgba(180,140,20,.25)}
+  .finalCol .matchWrap{margin-right:0;margin-left:0}
+  .finalCol .tie{width:100%;border-color:#e8cd79;box-shadow:0 2px 10px rgba(180,140,20,.25)}
   .finalCol::before{content:"";position:absolute;right:100%;top:50%;width:30px;height:3px;background:#334155}
   .finalCol::after{content:"";position:absolute;left:100%;top:50%;width:30px;height:3px;background:#334155}
   .bHalf .round:last-child .matchWrap{margin-right:0}
@@ -1632,14 +1633,21 @@ function fitMatchNames(){
   els.forEach(el=>fitText(el, 14.5, 8));
 }
 
+// Re-render the bracket in place WITHOUT losing the horizontal scroll position
+// (otherwise entering a score jumps the wide bracket back to the far left).
+function rerenderBracket(catKey){
+  const holder=document.getElementById('bracketHolder'); if(!holder) return;
+  const oldSc=holder.querySelector('.bracketCentered'); const sl=oldSc?oldSc.scrollLeft:0;
+  const nb=renderBracket(catKey); holder.replaceWith(nb);
+  const newSc=nb.querySelector('.bracketCentered'); if(newSc) newSc.scrollLeft=sl;
+}
 function refreshKnockoutNames(){
   const cat=DB[currentCat]; if(!cat.knockout) return;
   clearTimeout(window.__koTimer);
   window.__koTimer=setTimeout(()=>{
     // refresh first-round names from current standings (names/seeds only), then propagate + redraw bracket
     buildKnockout(currentCat,false);
-    const holder=document.getElementById('bracketHolder');
-    if(holder){ const nb=renderBracket(currentCat); holder.replaceWith(nb); }
+    rerenderBracket(currentCat);
   },180);
 }
 
@@ -1739,7 +1747,7 @@ function renderTie(catKey,ri,ti,tie,isFinal){
         const dd=DB[catKey].knockout.draw[ti];
         if(side==="top") dd.topRef=sel.value; else dd.botRef=sel.value;
         fillFirstRound(catKey); propagate(catKey); save(true);
-        const holder=document.getElementById('bracketHolder'); if(holder){const nb=renderBracket(catKey);holder.replaceWith(nb);}
+        rerenderBracket(catKey);
       };
       slot.appendChild(sel);
     } else {
@@ -1777,8 +1785,7 @@ function renderTie(catKey,ri,ti,tie,isFinal){
             tie.sets[s][oppIdx]=21; save(true);
           }
           propagate(catKey);
-          const holder=document.getElementById('bracketHolder');
-          if(holder){const nb=renderBracket(catKey);holder.replaceWith(nb);}
+          rerenderBracket(catKey);
         };
         sb.appendChild(inp);
       }
