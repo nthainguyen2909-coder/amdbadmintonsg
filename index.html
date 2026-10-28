@@ -1055,6 +1055,7 @@ function render(){
       <code>5</code> total points scored (Pts+) →
       <code>6</code> drawing lots by the committee <span style="color:var(--gold)">⚖</span>.
       Top ${CATS[currentCat].qualifiersPerGroup} of each group advance (shown with ✓).
+      <br><span style="color:var(--muted)">If head-to-head forms a loop (e.g. <b>A beats B, B beats C, C beats A</b>), it can't separate the tied pairs — ranking then continues to step 5 (total points), and if still equal, step 6 (draw lots <span style="color:var(--gold)">⚖</span>).</span>
     </div>`;
   v.appendChild(legend);
   const grid=document.createElement('div'); grid.className="groupGrid";
