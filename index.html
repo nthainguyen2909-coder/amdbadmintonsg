@@ -67,11 +67,18 @@
   .ctGridWrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);background:#fff}
   .ctTbl{border-collapse:collapse;font-size:11px}
   .ctTbl th{background:var(--panel2);color:var(--accent);font-weight:800;padding:6px 7px;border:1px solid var(--line);white-space:nowrap;position:sticky;top:0;z-index:1}
-  .ctTbl td{border:1px solid #eef1f3;padding:4px 6px;vertical-align:top;min-width:96px;max-width:140px}
+  .ctTbl td{border:1px solid #eef1f3;padding:4px 6px;vertical-align:middle;min-width:96px;max-width:140px}
+  .ctTbl tr.ctR{height:14px}
   .ctTimeH{font-weight:800;color:#0f172a;background:#fafbfc !important;white-space:nowrap;position:sticky;left:0;z-index:1;text-align:center}
   .ctTbl th.ctTimeH{z-index:3;color:var(--accent)} .ctTbl td.ctTimeH{z-index:2}
+  /* fine 2-minute ruler: mute minor ticks, emphasise :30 and the hour, highlight rows where a match starts */
+  .ctRuler{font-size:9px;font-weight:600;color:#c2ccd6;padding:0 6px !important;line-height:1;border-color:#f4f6f8 !important}
+  .ctRuler.rHalf{color:#8291a0;font-weight:800}
+  .ctRuler.rHour{color:#0f172a;font-weight:900;font-size:10px;border-top:2px solid #d4dde6 !important}
+  .ctRuler.rStart{color:var(--accent);font-weight:900;background:#eef5ff !important}
   .ctCell.cat-md{background:#d9edfe} .ctCell.cat-xd{background:#ffeeda} .ctCell.cat-wd{background:#ffe3e8}
   .ctCell.st-empty{background:#fbfefc}
+  .ctT{font-size:9px;font-weight:700;color:#5a6b7a;margin-bottom:1px}
   .ctFree{font-size:10px;font-style:italic;color:#8aa0ad;line-height:1.2;text-align:center}
   .ctHold{font-size:9.5px;font-style:italic;color:#b48a3a;line-height:1.2;text-align:center}
   .ctCell.st-done{box-shadow:inset 4px 0 0 #1f9d55} .ctCell.st-live{box-shadow:inset 4px 0 0 #e08b00}
@@ -1243,6 +1250,38 @@ function syncScheduleToNow(){
   items.forEach(o=>{ if(o.time && !played(o)){ const m=parseTime(o.time); if(m!=null) o.time=fmt(m+off); } });
   save(); render(); flash("Upcoming matches synced — next now "+fmt(nowMin));
 }
+// Reflow: after a match is delayed, push later UNPLAYED matches down so no court or player overlaps.
+// Counts each match's real duration (group 12 min, knockout 15, best-of-3 final 30) and cascades.
+function reflowSchedule(){
+  if(readOnly()) return;
+  const fmt=x=>{ x=((Math.round(x)%1440)+1440)%1440; return Math.floor(x/60)+":"+String(x%60).padStart(2,'0'); };
+  const played=o=> o && o.sets && o.sets.some(s=>s&&(s[0]!=null||s[1]!=null));
+  const items=[];
+  for(const k in CATS){ const cat=DB[k]; if(!cat) continue;
+    (cat.groups||[]).forEach(g=>(g.matches||[]).forEach(m=>{ if(!m.time||!m.court)return;
+      const pl=[...splitPair((g.pairs.find(p=>p.id===m.a)||{}).name),...splitPair((g.pairs.find(p=>p.id===m.b)||{}).name)];
+      items.push({o:m, start:parseTime(m.time), court:m.court, players:pl, dur:12, played:played(m)}); }));
+    const ko=cat.knockout; if(ko){
+      ko.rounds.forEach((r,ri)=>r.forEach(t=>{ if(!t.time||!t.court||!bothReal(t))return;
+        const pl=[...splitPair((t.top&&t.top.name)||""),...splitPair((t.bot&&t.bot.name)||"")];
+        items.push({o:t, start:parseTime(t.time), court:t.court, players:pl, dur:(koSetsFor(k,ko.rnames[ri])===3?30:15), played:played(t)}); }));
+      if(ko.third&&ko.third.time&&ko.third.court&&bothReal(ko.third)){ const t=ko.third;
+        items.push({o:t, start:parseTime(t.time), court:t.court, players:[...splitPair((t.top&&t.top.name)||""),...splitPair((t.bot&&t.bot.name)||"")], dur:15, played:played(t)}); }
+    }
+  }
+  const ordered=items.filter(x=>x.start!=null).sort((a,b)=> a.start-b.start || (a.played?-1:1));   // played first on ties
+  const courtFree={}, playerFree={}; let shifts=0;
+  ordered.forEach(it=>{
+    let earliest=it.start;
+    if(courtFree[it.court]!=null) earliest=Math.max(earliest, courtFree[it.court]);
+    it.players.forEach(p=>{ if(playerFree[p]!=null) earliest=Math.max(earliest, playerFree[p]); });
+    if(!it.played && earliest>it.start){ it.o.time=fmt(earliest); it.start=earliest; shifts++; }   // push unplayed down
+    courtFree[it.court]=it.start+it.dur;
+    it.players.forEach(p=>{ playerFree[p]=it.start+it.dur; });
+  });
+  if(!shifts){ flash("No overlaps — nothing to shift"); return; }
+  save(); render(); flash("Reflowed: shifted "+shifts+" match"+(shifts>1?"es":"")+" down to clear overlaps");
+}
 // <select> options for a first-round slot: empty, BYE, then every qualifier (A1, A2, ... by group).
 function drawOptions(catKey, current){
   const cfg=CATS[catKey];
@@ -1523,7 +1562,8 @@ function renderCourts(v){
   if(!readOnly()){
     const sync=document.createElement('div'); sync.className="actUpdate";
     sync.innerHTML=`<button class="btn" onclick="syncScheduleToNow()">🕐 Sync schedule to now</button>`
-      +`<span class="actUpdateHint">Slides the upcoming (unplayed) matches so the next one starts at the current clock time — use if the event runs behind. Already-played matches keep their recorded times. One-time; click again if it falls further behind.</span>`;
+      +`<button class="btn" onclick="reflowSchedule()">⏬ Shift down after delays</button>`
+      +`<span class="actUpdateHint">Sync = slide all upcoming matches so the next starts now. Shift down = after you delay a match, push later unplayed matches down so no court or player overlaps (counts 12-min group / 15-min knockout / 30-min finals). Played matches never move.</span>`;
     v.appendChild(sync);
   }
 
@@ -1543,19 +1583,64 @@ function renderCourts(v){
   }
   const thead=`<tr><th class="ctTimeH">Time</th>${courts.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr>`;
   // During the knockout stage only 6 of the 10 courts are used, so the rest are genuinely free.
-  // Flag empty courts from the first knockout slot onward as open for a friendly match.
-  // (Round-robin idle slots are NOT flagged — they may still be used for pulled matches.)
   const koStart=parseTime("14:48");
-  const tbody=times.map(t=>{ const tm=parseTime(t);
-    const spare=(tm!=null&&tm>=koStart);                       // knockout stage (14:48+): genuinely free
-    const rr=(tm!=null&&tm<koStart);                           // round-robin stage: may still be used / may shift earlier
-    const emptyLabel = spare ? '<div class="ctFree">🏸 Free — ready for friendly play</div>'
-                      : (rr ? '<div class="ctHold">🔄 Round-robin — may move earlier</div>' : '');
-    return `<tr><td class="ctTimeH">${escapeHtml(t)}</td>`
-    +courts.map(c=>{ const cell=cellAt[t+"|"+c];
-        if(!cell) return `<td class="ctCell st-empty">${emptyLabel}</td>`;
-        const ci=cellInfo(cell); return `<td class="ctCell cat-${ci.cat} st-${ci.cls}">${ci.html}</td>`; }).join("")
-    +`</tr>`; }).join("");
+  // FIXED 2-MINUTE GRID: the Time column is a uniform ruler 13:00, 13:02, 13:04 … 17:30.
+  // Each match sits on the grid line nearest its real time and spans forward by its duration
+  // (group 12 min = 6 rows, knockout 15 min, best-of-3 final 30 min) via rowspan, so you can
+  // read when a court frees up and when the next match can start.
+  const GSTART=parseTime("13:00"), GEND=parseTime("17:30"), STEP=2;
+  const ROWS=[]; for(let m=GSTART;m<=GEND;m+=STEP) ROWS.push(m);
+  const N=ROWS.length, ri=m=>Math.round((m-GSTART)/STEP);
+  function durOf(e){ const s=e.stage||"";
+    if(/Group/.test(s)) return 12;                       // round-robin, 1 game
+    if(/3rd/.test(s)) return 15;                          // 3rd-place playoff, 1 game
+    if(/Semi|Quarter|Round of/i.test(s)) return 15;      // knockout, 1 game
+    if(/Final/i.test(s)) return 30;                       // best-of-3 final
+    return 15; }
+  // place[court][rowIndex] = a match (its cell) OR an empty-run block that STARTS at that row.
+  // Every non-start row is interior to a block above it, so the row loop just skips those cells.
+  const place={}, covered={};
+  courts.forEach(c=>{ place[c]={}; covered[c]=new Set(); });
+  items.forEach(e=>{ const sm=parseTime(e.time); if(sm==null||sm>=1e9) return;
+    let r=ri(sm); if(r<0)r=0; if(r>=N) return;
+    const span=Math.max(1,Math.round(durOf(e)/STEP));
+    // if the start grid line is already taken by another match on this court, nudge to the next free line
+    while(r<N && covered[e.court].has(r)) r++;
+    if(r>=N) return;
+    place[e.court][r]={match:e, span}; e.__r=r;
+    for(let k=0;k<span&&r+k<N;k++) covered[e.court].add(r+k); });
+  // fill the gaps on each court with a merged empty block per contiguous free run,
+  // but SPLIT the run at the 14:48 knockout boundary so a court that finishes its round-robin
+  // early shows "round-robin — may move earlier" only before 14:48 and "Free" after (not one
+  // big block mis-labeled round-robin because it happens to start before 14:48).
+  const koRow=ri(koStart);
+  courts.forEach(c=>{ let r=0;
+    while(r<N){ if(covered[c].has(r)){ r++; continue; }
+      let e=r; while(e<N && !covered[c].has(e)) e++;        // [r,e) is one free run
+      let s=r;
+      while(s<e){ let seg=e;
+        if(s<koRow && koRow<e) seg=koRow;                   // break the block at the knockout boundary
+        place[c][s]={empty:true, span:seg-s, spare:ROWS[s]>=koStart};
+        s=seg; }
+      r=e; } });
+  const startRows=new Set(); courts.forEach(c=>Object.keys(place[c]).forEach(k=>startRows.add(+k)));
+  const parts=[];
+  ROWS.forEach((tm,r)=>{
+    const lab=fmtMin(tm), isHour=tm%60===0, isHalf=tm%30===0, startHere=courts.some(c=>place[c][r]&&place[c][r].match);
+    const tcls="ctRuler"+(isHour?" rHour":(isHalf?" rHalf":""))+(startHere?" rStart":"");
+    let row=`<tr class="ctR"><td class="ctTimeH ${tcls}">${escapeHtml(lab)}</td>`;
+    courts.forEach(c=>{ const seg=place[c][r];
+      if(!seg) return;                                       // interior row of a block above → no cell
+      if(seg.match){ const e=seg.match, ci=cellInfo(e);
+        row+=`<td class="ctCell cat-${ci.cat} st-${ci.cls}" rowspan="${seg.span}"><div class="ctT">⏱ ${escapeHtml(e.time||"")}</div>${ci.html}</td>`;
+      } else {
+        const lbl = seg.span>=3 ? (seg.spare ? '<div class="ctFree">🏸 Free — ready for friendly play</div>' : '<div class="ctHold">🔄 Round-robin — may move earlier</div>') : '';
+        row+=`<td class="ctCell st-empty" rowspan="${seg.span}">${lbl}</td>`;
+      }
+    });
+    parts.push(row+`</tr>`);
+  });
+  const tbody=parts.join("");
   const wrap=document.createElement('div'); wrap.className="ctGridWrap";
   wrap.innerHTML=`<table class="ctTbl">${thead}${tbody}</table>`;
   v.appendChild(wrap);
@@ -1570,6 +1655,8 @@ function parseTime(t){
   if(m){ let hh=+m[1],mm=+m[2]; if(/p/i.test(t)&&hh<12)hh+=12; if(/a/i.test(t)&&hh===12)hh=0; return hh*60+mm; }
   const n=t.match(/\d{1,2}/); return n?(+n[0])*60:1e9;
 }
+// minutes-since-midnight → "H:MM"
+function fmtMin(x){ x=((Math.round(x)%1440)+1440)%1440; return Math.floor(x/60)+":"+String(x%60).padStart(2,'0'); }
 // flatten every match (group + knockout) across all categories into one schedule list
 function collectSchedule(){
   const out=[];
