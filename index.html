@@ -65,9 +65,11 @@
   .crVs{color:var(--muted);font-weight:400;font-size:11px;margin:0 3px}
   .crOff{font-size:11.5px;color:var(--muted);margin-top:2px}
   .ctGridWrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);background:#fff}
-  .ctTbl{border-collapse:collapse;font-size:11px}
+  /* fixed layout → the 10 court columns divide the full panel width EQUALLY (max width, no blank on the right) */
+  .ctTbl{border-collapse:collapse;font-size:11px;width:100%;table-layout:fixed;min-width:900px}
   .ctTbl th{background:var(--panel2);color:var(--accent);font-weight:800;padding:6px 7px;border:1px solid var(--line);white-space:nowrap;position:sticky;top:0;z-index:1}
-  .ctTbl td{border:1px solid #eef1f3;padding:4px 6px;vertical-align:middle;min-width:96px;max-width:140px}
+  .ctTbl td{border:1px solid #eef1f3;padding:4px 6px;vertical-align:middle;overflow:hidden}
+  .ctTbl col.ctTimeCol{width:48px}   /* keep the time ruler narrow; courts share all remaining width */
   .ctTbl tr.ctR{height:14px}
   .ctTimeH{font-weight:800;color:#0f172a;background:#fafbfc !important;white-space:nowrap;position:sticky;left:0;z-index:1;text-align:center}
   .ctTbl th.ctTimeH{z-index:3;color:var(--accent)} .ctTbl td.ctTimeH{z-index:2}
@@ -1648,14 +1650,29 @@ function renderCourts(v){
   // Every non-start row is interior to a block above it, so the row loop just skips those cells.
   const place={}, covered={};
   courts.forEach(c=>{ place[c]={}; covered[c]=new Set(); });
+  // Group matches by court, place them in START-TIME order, and CLIP each block so it never runs into
+  // the next match on the same court. This matters because durations don't divide evenly into the 2-min
+  // grid (a 15-min match = 7.5 rows); without clipping a rounded-up block would overlap the next match
+  // 15 min later and spill an extra cell past the last court column.
+  const byCourt={};
   items.forEach(e=>{ const sm=parseTime(e.time); if(sm==null||sm>=1e9) return;
     let r=ri(sm); if(r<0)r=0; if(r>=N) return;
-    const span=Math.max(1,Math.round(durOf(e)/STEP));
-    // if the start grid line is already taken by another match on this court, nudge to the next free line
-    while(r<N && covered[e.court].has(r)) r++;
-    if(r>=N) return;
-    place[e.court][r]={match:e, span}; e.__r=r;
-    for(let k=0;k<span&&r+k<N;k++) covered[e.court].add(r+k); });
+    (byCourt[e.court]=byCourt[e.court]||[]).push({e, r, nom:Math.max(1,Math.round(durOf(e)/STEP))}); });
+  courts.forEach(c=>{
+    const list=(byCourt[c]||[]).sort((a,b)=> a.r-b.r);
+    let cursor=0;                                           // next free row on this court
+    list.forEach((it,i)=>{
+      let start=Math.max(it.r, cursor);                     // a genuine double-book stacks into the next free slot
+      if(start>=N) return;
+      let span=it.nom;
+      const next=list[i+1];
+      if(next) span=Math.min(span, Math.max(1, next.r-start));   // clip to the next match's start
+      span=Math.max(1, Math.min(span, N-start));
+      place[c][start]={match:it.e, span}; it.e.__r=start;
+      for(let k=0;k<span;k++) covered[c].add(start+k);
+      cursor=start+span;
+    });
+  });
   // fill the gaps on each court with a merged empty block per contiguous free run,
   // but SPLIT the run at the 14:48 knockout boundary so a court that finishes its round-robin
   // early shows "round-robin — may move earlier" only before 14:48 and "Free" after (not one
@@ -1689,7 +1706,8 @@ function renderCourts(v){
   });
   const tbody=parts.join("");
   const wrap=document.createElement('div'); wrap.className="ctGridWrap";
-  wrap.innerHTML=`<table class="ctTbl">${thead}${tbody}</table>`;
+  const colgroup=`<colgroup><col class="ctTimeCol">${courts.map(()=>`<col>`).join("")}</colgroup>`;
+  wrap.innerHTML=`<table class="ctTbl">${colgroup}${thead}${tbody}</table>`;
   v.appendChild(wrap);
 }
 
