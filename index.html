@@ -213,6 +213,12 @@
   .matchSum .dot{color:var(--line);margin:0 1px}
   .detBtn{padding:4px 11px;font-size:11.5px;flex:none}
   body.vo .detBtn{display:none}
+  .lockMBtn{padding:4px 10px;font-size:11.5px;flex:none;margin-left:auto}
+  .lockMBtn.on{background:#fdecee;border-color:#e5a3a9;color:#b11c28;font-weight:800}
+  .lockMBtn.ro{display:inline-block;border:1px solid #e5a3a9;border-radius:8px;background:#fdecee}
+  .lockMBtn+.detBtn{margin-left:0}
+  .matchCard.mLocked{background:#fbf3f4;border-left:3px solid #e5484d}
+  .matchCard.mLocked input{background:#f3e9ea;cursor:not-allowed}
   .detBox{max-width:380px}
   .detField{display:block;margin-bottom:11px}
   .detField span{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:4px}
@@ -537,6 +543,18 @@ function changePassword(){
   a.onkeydown=(e)=>{ if(e.key==="Enter") b.focus(); else if(e.key==="Escape") close(); };
   b.onkeydown=(e)=>{ if(e.key==="Enter") submit(); else if(e.key==="Escape") close(); };
   setTimeout(()=>a.focus(), 50);
+}
+// Per-match lock: locking a match freezes its score. Unlocking requires the scoring password.
+function toggleMatchLock(m){
+  if(readOnly()) return;
+  if(m.locked){
+    const p=prompt("🔒 This match is locked. Enter the password to unlock it:");
+    if(p===null) return;
+    if(p===getEditPassword()){ m.locked=false; save(); render(); flash("Match unlocked 🔓"); }
+    else alert("Wrong password — match stays locked.");
+  } else {
+    m.locked=true; save(); render(); flash("Match locked 🔒");
+  }
 }
 
 function blankMatch(a,b){ return {a,b,name:"",time:"",court:"",umpire:"",line1:"",line2:"",sets:Array.from({length:GROUP_SETS},()=>[null,null])}; }
@@ -1772,9 +1790,16 @@ function detailsHeader(obj, title){
   const sum=document.createElement('div'); sum.className="matchSum"; sum.innerHTML=detailsSummary(obj);
   hdr.appendChild(sum);
   if(!readOnly()){
+    const lk=document.createElement('button'); lk.className="btn lockMBtn"+(obj.locked?" on":"");
+    lk.textContent=obj.locked?"🔒 Locked":"🔓 Lock";
+    lk.title=obj.locked?"Score locked — click and enter password to unlock":"Lock this match's score";
+    lk.onclick=()=>toggleMatchLock(obj);
+    hdr.appendChild(lk);
     const edit=document.createElement('button'); edit.className="btn detBtn"; edit.textContent="✎ Details";
     edit.onclick=()=>openDetailsModal(obj, title);
     hdr.appendChild(edit);
+  } else if(obj.locked){
+    const lk=document.createElement('span'); lk.className="lockMBtn on ro"; lk.textContent="🔒 Locked"; hdr.appendChild(lk);
   }
   return hdr;
 }
@@ -1860,6 +1885,7 @@ function renderGroup(g,gi){
       inpTop[ns-1].disabled=true; inpTop[ns-1].value="";
       inpBot[ns-1].disabled=true; inpBot[ns-1].value="";
     }
+    if(m.locked){ [...inpTop,...inpBot].forEach(i=>{ i.disabled=true; }); card.classList.add('mLocked'); }
     card.appendChild(grid);
     const warn=document.createElement('div'); warn.className="setWarn"; card.appendChild(warn);
     markSetErrors(card, m);
@@ -1874,6 +1900,7 @@ function mkScore(m,mi,s,side){
   inp.type="number"; inp.min="0"; inp.max="30"; inp.inputMode="numeric";
   const v=m.sets[s][side]; inp.value=(v===null||v===undefined)?"":v;
   inp.oninput=()=>{
+    if(m.locked){ return; }   // locked match — ignore edits
     let val=inp.value===""?null:parseInt(inp.value,10);
     if(val!==null && !isNaN(val)){ if(val>30){val=30;inp.value=30;} if(val<0){val=0;inp.value=0;} }  // badminton game caps at 30
     m.sets[s][side]=(val===null||isNaN(val))?null:val;
@@ -2102,7 +2129,9 @@ function renderTie(catKey,ri,ti,tie,isFinal){
         const serr=setError(tie.sets[s][0], tie.sets[s][1]);
         if(serr){ inp.classList.add('err'); inp.title="Invalid set "+(s+1)+": "+serr; }
         // While typing: only update the data + save. Do NOT redraw (that would steal focus).
+        if(tie.locked) inp.disabled=true;   // locked knockout match
         inp.oninput=()=>{
+          if(tie.locked){ return; }
           let x=inp.value===""?null:parseInt(inp.value,10);
           if(x!==null && !isNaN(x)){ if(x>30){x=30;inp.value=30;} if(x<0){x=0;inp.value=0;} }  // badminton game caps at 30
           tie.sets[s][idx]=(x===null||isNaN(x))?null:x;
