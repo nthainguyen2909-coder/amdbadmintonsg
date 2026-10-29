@@ -253,6 +253,7 @@
   .setLabels{display:flex;gap:5px;font-size:10px;color:var(--muted)}
   .setLabels span{width:52px;text-align:center}
   .lots{font-size:10px;color:var(--gold);background:#fbf2d6;border:1px solid #ecd79c;border-radius:4px;padding:1px 5px;font-weight:600}
+  .drawn{font-size:11px}
   .matchGrid{display:grid;gap:1px 6px;align-items:center;margin-top:1px;padding-left:2px}
   .mgLabel{font-size:11px;color:var(--muted);text-align:center;font-weight:600}
   .mgName{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;padding-right:6px;align-self:center}
@@ -798,17 +799,28 @@ function resolveTie(block, group){
     if(sub.length===1){ out=out.concat(sub); }
     else if(sub.length===block.length){
       // head-to-head could not separate anyone (e.g. circular A>B>C>A) -> Step 5 total points,
-      // then Step 6: the tied pairs draw lots among themselves (flagged ⚖). Stable fallback order.
+      // then Step 6: still exactly equal -> resolve by RANDOM WHEEL (order stored in group.tieDraw,
+      // keyed by the tied ids so it auto-invalidates if results change). Undrawn ties flagged ⚖.
       sub.sort((a,b)=> (b.pf-a.pf) || a.id.localeCompare(b.id));
       const expected = group.pairs.length - 1;
       const allComplete = sub.every(x=>x.played===expected && expected>0);
       if(allComplete){
-        for(let k=0;k<sub.length;k++){
-          const same=sub.filter(x=>x.pf===sub[k].pf);
-          if(same.length>1) sub[k].lots=true;   // still exactly equal on points -> draw lots
+        const draw=group.tieDraw||{}; const res=[]; let p=0;
+        while(p<sub.length){
+          let q=p; while(q<sub.length && sub[q].pf===sub[p].pf) q++;
+          const run=sub.slice(p,q);
+          if(run.length>1){
+            const key=run.map(x=>x.id).slice().sort().join("|");
+            const ord=draw[key];
+            if(ord && ord.length===run.length && run.every(x=>ord.includes(x.id))){
+              const byId={}; run.forEach(x=>byId[x.id]=x);
+              ord.forEach(id=>{ byId[id].tieDrawn=true; res.push(byId[id]); });   // wheel order
+            } else { run.forEach(x=>x.lots=true); res.push(...run); }             // still needs a spin
+          } else res.push(...run);
+          p=q;
         }
-      }
-      out=out.concat(sub);
+        out=out.concat(res);
+      } else out=out.concat(sub);
     } else {
       out=out.concat(resolveTie(sub, group));     // smaller head-to-head group may separate them
     }
@@ -1027,6 +1039,41 @@ function openWildcardDraw(catKey){
     render();                              // update seeds 11/12 live
     return s2.pending ? remaining() : false;
   });
+}
+
+/* ---- Group-standings tie: resolve by RANDOM WHEEL ---- */
+// A tie cluster = the pairs still flagged .lots that share the same total points (unresolved by all
+// criteria). Keyed by their sorted ids so a stored draw auto-invalidates if results later change.
+function tieClusters(g){
+  const st=standings(g), by={};
+  st.forEach(r=>{ if(r.lots){ (by[r.pf]=by[r.pf]||[]).push(r); } });
+  return Object.values(by).filter(a=>a.length>1)
+    .map(a=>({ids:a.map(r=>r.id), names:a.map(r=>r.name), key:a.map(r=>r.id).slice().sort().join("|")}));
+}
+function groupTieState(g){ return { pending:tieClusters(g), drawn:!!(g.tieDraw && Object.keys(g.tieDraw).length) }; }
+// Spin to ORDER one tie cluster: each spin places the next pair; the last one auto-takes the final slot.
+function openGroupTieDraw(catKey, letter){
+  const g=DB[catKey].groups.find(x=>x.letter===letter); if(!g) return;
+  const clusters=tieClusters(g);
+  if(!clusters.length){ alert("No tie to break — the order is already clear."); return; }
+  const cl=clusters[0];                                    // one cluster at a time
+  g.tieDraw=g.tieDraw||{};
+  const nameById={}; standings(g).forEach(r=>nameById[r.id]=r.name);
+  const picked=()=> (g.tieDraw[cl.key]||[]);
+  const remainIds=()=> cl.ids.filter(id=>!picked().includes(id));
+  const remainNames=()=> remainIds().map(id=>nameById[id]);
+  openWheel(remainNames(), `Break the ${cl.ids.length}-way tie in Group ${letter} — spin for 1st, then 2nd…`, (name)=>{
+    const id=cl.ids.find(i=>nameById[i]===name); if(!id) return remainNames();
+    g.tieDraw[cl.key]=picked().concat(id);
+    const rem=remainIds();
+    if(rem.length===1) g.tieDraw[cl.key]=g.tieDraw[cl.key].concat(rem[0]);   // auto-place the last
+    save(); render();
+    return remainIds().length>1 ? remainNames() : false;
+  });
+}
+function resetGroupTieDraw(catKey, letter){
+  const g=DB[catKey].groups.find(x=>x.letter===letter);
+  if(g){ g.tieDraw={}; save(); render(); flash("Tie draw cleared — spin again"); }
 }
 
 /* ===================== KNOCKOUT ===================== */
@@ -1382,9 +1429,9 @@ function render(){
       <code>3</code> point differential (Pt±) →
       <code>4</code> head-to-head (winner of the direct match) →
       <code>5</code> total points scored (Pts+) →
-      <code>6</code> drawing lots by the tied pairs themselves <span style="color:var(--gold)">⚖</span>.
+      <code>6</code> a <b>random wheel</b> among the tied pairs <span style="color:var(--gold)">⚖</span>.
       Top ${CATS[currentCat].qualifiersPerGroup} of each group advance${(CATS[currentCat].thirdWildcards||0)?`, plus the best ${CATS[currentCat].thirdWildcards} 3rd-place pairs across all groups`:""} (shown with ✓).
-      <br><span style="color:var(--muted)">If head-to-head forms a loop (e.g. <b>A beats B, B beats C, C beats A</b>), it can't separate the tied pairs — ranking continues to step 5 (total points), and if they're still exactly equal the tied pairs <b>draw lots among themselves</b> (flagged <span style="color:var(--gold)">⚖</span>).</span>
+      <br><span style="color:var(--muted)">If head-to-head forms a loop (e.g. <b>A beats B, B beats C, C beats A</b>), it can't separate the tied pairs — ranking continues to step 5 (total points), and if they're still exactly equal the tie is broken by a <b>random wheel</b> (tied pairs flagged <span style="color:var(--gold)">⚖ spin</span> — press <b>🎡 Spin to break tie</b> in the group header).</span>
     </div>`;
   v.appendChild(legend);
   const grid=document.createElement('div'); grid.className="groupGrid";
@@ -1911,19 +1958,28 @@ function renderGroup(g,gi){
   const qSet=new Set(st.slice(0,perG).map(r=>r.id));
   wildcardThirds(currentCat).forEach(s=>qSet.add(s.id));   // best 3rd-place wildcards also advance (XD)
 
+  // tie-break-by-wheel control (only when a tie is unresolved by all criteria)
+  const ts=groupTieState(g);
+  let tieCtl="";
+  if(!readOnly()){
+    if(ts.pending.length) tieCtl=` <button class="btn whBtn warn" style="padding:2px 8px;font-size:11px">🎡 Spin to break tie</button>`;
+    else if(ts.drawn) tieCtl=` <span class="hdNote">🎲 Tie ordered by wheel</span> <button class="btn redoBtn" style="padding:2px 7px;font-size:11px">↺ Redo</button>`;
+  }
   // header + pair name editors
-  let html=`<h3><span class="gx">Group ${g.letter}</span> <span class="note" style="margin:0">${g.pairs.length} pairs</span></h3>`;
+  let html=`<h3><span class="gx">Group ${g.letter}</span> <span class="note" style="margin:0">${g.pairs.length} pairs</span>${tieCtl}</h3>`;
   html+=`<table class="standings"><thead><tr><th style="text-align:left">#</th><th style="text-align:left">Pair</th><th title="Matches won">W</th><th>L</th><th title="Games won-lost">Games</th><th title="Game differential (won − lost)">G±</th><th title="Point differential (scored − conceded)">Pt±</th><th title="Total points scored">Pts+</th></tr></thead><tbody>`;
   st.forEach((r,i)=>{
     const q=qSet.has(r.id);
     const d=(r.diff>0?"+":"")+r.diff, gd=(r.gameDiff>0?"+":"")+r.gameDiff;
     html+=`<tr class="${q?'q':''}"><td><span class="posbadge">${i+1}</span></td>
-      <td class="name" data-id="${r.id}">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — the tied pairs draw lots among themselves">⚖ draw</span>':''}</td>
+      <td class="name" data-id="${r.id}">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — spin the wheel to break it">⚖ spin</span>':(r.tieDrawn?' <span class="drawn" title="Tie order decided by the random wheel">🎲</span>':'')}</td>
       <td><b>${r.wins}</b></td><td>${r.losses}</td>
       <td>${r.setW}-${r.setL}</td><td>${gd}</td><td>${d}</td><td>${r.pf}</td></tr>`;
   });
   html+=`</tbody></table>`;
   el.innerHTML=html;
+  const wb=el.querySelector('.whBtn'); if(wb) wb.onclick=()=>openGroupTieDraw(currentCat, g.letter);
+  const rb=el.querySelector('.redoBtn'); if(rb) rb.onclick=()=>{ if(confirm("Clear this group's tie draw and spin again?")) resetGroupTieDraw(currentCat, g.letter); };
 
   // editable pair names (separate, so typing never fights standings sort)
   const editWrap=document.createElement('div');
@@ -2033,7 +2089,7 @@ function updateStandingsTables(){
     if(!tbody)return;
     tbody.innerHTML=st.map((r,i)=>`<tr class="${qSet.has(r.id)?'q':''}">
       <td><span class="posbadge">${i+1}</span></td>
-      <td class="name">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — the tied pairs draw lots among themselves">⚖ draw</span>':''}</td>
+      <td class="name">${escapeHtml(r.name)}${r.lots?' <span class="lots" title="Tie unresolved by all criteria — broken by the random wheel">⚖ spin</span>':(r.tieDrawn?' <span class="drawn" title="Tie order decided by the random wheel">🎲</span>':'')}</td>
       <td><b>${r.wins}</b></td><td>${r.losses}</td>
       <td>${r.setW}-${r.setL}</td><td>${(r.gameDiff>0?"+":"")+r.gameDiff}</td><td>${(r.diff>0?"+":"")+r.diff}</td><td>${r.pf}</td></tr>`).join("");
     // update winner highlight on match rows
