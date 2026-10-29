@@ -73,6 +73,7 @@
   .ctCell.cat-md{background:#d9edfe} .ctCell.cat-xd{background:#ffeeda} .ctCell.cat-wd{background:#ffe3e8}
   .ctCell.st-empty{background:#fbfefc}
   .ctFree{font-size:10px;font-style:italic;color:#8aa0ad;line-height:1.2;text-align:center}
+  .ctHold{font-size:9.5px;font-style:italic;color:#b48a3a;line-height:1.2;text-align:center}
   .ctCell.st-done{box-shadow:inset 4px 0 0 #1f9d55} .ctCell.st-live{box-shadow:inset 4px 0 0 #e08b00}
   .ctDot{display:inline-block;margin-right:3px;font-size:9px;vertical-align:middle} .ctDot.done{color:#1f9d55} .ctDot.live{color:#e08b00}
   .ctLegend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:6px;font-size:10.5px;align-items:center}
@@ -100,7 +101,15 @@
   .stChip.done{background:#e6f6ec;color:#15803d}
   .stChip.live{background:#fdf1dd;color:#b4530a}
   .seedBox{margin:8px 0 14px;border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:560px}
-  .seedHd{background:var(--panel2);font-weight:800;color:var(--accent);padding:8px 12px;font-size:13px;border-bottom:1px solid var(--line)}
+  .seedHd{background:var(--panel2);font-weight:800;color:var(--accent);padding:8px 12px;font-size:13px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .whBtn{font-size:12px;padding:5px 11px;flex:none}
+  .whBtn.warn{background:#fff3e0;border-color:#f0b36b;color:#9a5a08}
+  .hdNote{font-size:11.5px;font-weight:700;color:#15803d}
+  .wheelBox{text-align:center;max-width:360px}
+  .wheelWrap{position:relative;width:300px;height:300px;margin:8px auto 4px}
+  .wheelPin{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:26px;color:#e5484d;z-index:2;line-height:1;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
+  #wheelCv{border-radius:50%;box-shadow:0 4px 18px rgba(8,20,24,.28);background:#fff}
+  .wheelRes{font-weight:800;font-size:15px;margin:10px 0 2px;color:var(--accent)}
   .seedTbl{width:100%;border-collapse:collapse;font-size:12.5px}
   .seedTbl th{background:#fafbfc;color:var(--muted);font-weight:700;text-align:right;padding:5px 8px;border-bottom:1px solid var(--line)}
   .seedTbl th:nth-child(3){text-align:left}
@@ -109,6 +118,7 @@
   .seedTbl .sNo{font-weight:800;color:#0f172a;text-align:center;width:26px}
   .seedTbl .sName{text-align:left;font-weight:600;color:#1f2a33}
   .sBr{display:inline-block;font-size:10px;font-weight:800;padding:1px 6px;border-radius:999px;color:#fff}
+  .sFrom{display:inline-block;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:6px;background:#eef1f5;color:#334155;font-variant-numeric:tabular-nums}
   .sBr.b1{background:#0f766e}.sBr.b2{background:#b4530a}.sBr.b3{background:#be185d}.sBr.b4{background:#4338ca}
   .sBr.res{background:#cbd5e1;color:#475569;font-weight:700}
   .seedTbl tr.resv{color:#94a3b8}
@@ -240,7 +250,7 @@
   .matchGrid input:disabled,.setBox input:disabled,.tie .slot input:disabled{background:repeating-linear-gradient(135deg,#eef1f5,#eef1f5 5px,#e7ebf1 5px,#e7ebf1 10px);border-color:#e3e8ef;color:#b4bcc8;cursor:not-allowed;box-shadow:none}
   .bracketWrap{display:flex;gap:0;overflow-x:auto;padding:10px 4px 20px}
   .round{display:flex;flex-direction:column;min-width:290px}
-  .round .rhd{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:6px}
+  .round .rhd,.finalColWrap .rhd{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:6px}
   .roundBody{flex:1;display:flex;flex-direction:column}
   .matchWrap{flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;margin-right:28px}
   .round:last-child .matchWrap{margin-right:0}
@@ -248,27 +258,33 @@
      so the line lands in the gap BETWEEN the two pairs instead of across the top pair's row. */
   body{--koOff:14px} body.hideKoHdr{--koOff:0px}
   /* connector elbows: each match links to the midpoint between the pair, then into the next round */
-  .round:not(:last-child) .matchWrap:nth-child(odd)::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:14px;height:calc(50% - var(--koOff,0px));border-right:3px solid #334155;border-top:3px solid #334155}
-  .round:not(:last-child) .matchWrap:nth-child(even)::after{content:"";position:absolute;left:100%;top:0;width:14px;height:calc(50% + var(--koOff,0px));border-right:3px solid #334155;border-bottom:3px solid #334155}
-  .round:not(:first-child) .matchWrap::before{content:"";position:absolute;left:-14px;top:calc(50% + var(--koOff,0px));width:14px;height:3px;background:#334155}
+  .round:not(:last-child) .matchWrap:nth-child(odd)::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:14px;height:calc(50% - var(--koOff,0px));border-right:3px solid #94a3b8;border-top:3px solid #94a3b8}
+  .round:not(:last-child) .matchWrap:nth-child(even)::after{content:"";position:absolute;left:100%;top:0;width:14px;height:calc(50% + var(--koOff,0px));border-right:3px solid #94a3b8;border-bottom:3px solid #94a3b8}
+  .round:not(:first-child) .matchWrap::before{content:"";position:absolute;left:-14px;top:calc(50% + var(--koOff,0px));width:14px;height:3px;background:#94a3b8}
   /* centered / mirrored bracket: left half | Final | right half */
   .bracketCentered{display:flex;overflow-x:auto;padding:6px 0}
   .bracketInner{display:flex;align-items:center;margin:0 auto}   /* centers when it fits, scrolls to R16 when wider than screen */
   .bHalf{display:flex}
   .bRight{transform:scaleX(-1)}
   .bRight .tie{transform:scaleX(-1)}          /* un-mirror the text in the right half */
-  .finalColWrap{display:flex;flex-direction:column;align-items:stretch;margin:0 30px;width:230px;flex:0 0 230px}
+  .bRight .rhd{transform:scaleX(-1)}          /* un-mirror the round-header labels too (QF/SF/R16) */
+  .finalColWrap{display:flex;flex-direction:column;align-items:stretch;align-self:stretch;margin:0 30px;width:230px;flex:0 0 230px}
   .finalCol{position:relative;display:flex;flex-direction:column;justify-content:center;flex:1}
   .finalCol .matchWrap{margin-right:0;margin-left:0}
   .finalCol .tie{width:100%;border-color:#e8cd79;box-shadow:0 2px 10px rgba(180,140,20,.25)}
-  .finalCol::before{content:"";position:absolute;right:100%;top:calc(50% + var(--koOff,0px));width:30px;height:3px;background:#334155}
-  .finalCol::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:30px;height:3px;background:#334155}
+  .finalCol .tie .slot{min-height:46px}          /* taller rows: the final's two pairs get more room */
+  .finalCol::before{content:"";position:absolute;right:100%;top:calc(50% + var(--koOff,0px));width:30px;height:3px;background:#94a3b8}
+  .finalCol::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:30px;height:3px;background:#94a3b8}
   .bHalf .round:last-child .matchWrap{margin-right:0}
-  .bHalf .round:last-child .matchWrap::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:14px;height:3px;background:#334155}
+  .bHalf .round:last-child .matchWrap::after{content:"";position:absolute;left:100%;top:calc(50% + var(--koOff,0px));width:14px;height:3px;background:#94a3b8}
   /* keep every bracket box the SAME height so SF/QF/Final centers line up and the connectors don't kink:
      clip the match-details header to a single line (officials etc. stay visible in Courts/Activities). */
-  .tie .koHdr{align-items:center;flex-wrap:nowrap}
-  .tie .koHdr .matchSum{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+  .tie .koHdr{align-items:flex-start}
+  .tie .koHdr .matchSum{min-width:0;flex:1;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
+  .offLine{display:inline}
+  .offLine::before{content:" · ";color:var(--muted)}      /* group headers: officials stay inline */
+  .tie .koHdr .offLine{display:block;margin-top:1px}        /* knockout header: officials drop to line 2 */
+  .tie .koHdr .offLine::before{content:none}
   body.hideKoHdr .tie .koHdr{display:none}   /* "Hide match details" toggle: cleaner bracket boxes */
   .thirdBox{margin-top:18px;max-width:270px;border:1px dashed var(--line);border-radius:10px;padding:10px 12px;background:var(--panel2)}
   .thirdBox .rhd{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
@@ -389,7 +405,7 @@
 /* ===================== CONFIG ===================== */
 const CATS = {
   mens:  {name:"Men's Double",   groups:6, qualifiersPerGroup:2, knockout:"R16"}, // 6×top2 = 12 -> R16(+byes)->QF->SF->F
-  mixed: {name:"Mixed Double",   groups:5, qualifiersPerGroup:2, knockout:"R16"}, // 5×top2 = 10 -> R16(+byes)->QF->SF->F
+  mixed: {name:"Mixed Double",   groups:5, qualifiersPerGroup:2, thirdWildcards:2, knockout:"R16"}, // 5×top2=10 + best 2 thirds = 12 (same as MD)
   women: {name:"Women's Double", groups:2, qualifiersPerGroup:2, knockout:"SF"}   // 2×top2 = 4  -> SF->F
 };
 const SETS = 3;               // knockout: best of 3 games to 21
@@ -401,7 +417,7 @@ const GROUP_LETTERS = "ABCDEFGH";
 let DB = {};        // persisted structure
 let currentCat = "mens";
 const LS_KEY = "badminton_tourney_v2";   // bumped: load the preloaded AMD draw
-const SEED_DB = {"mens":{"groups":[{"letter":"A","pairs":[{"id":"mens-0-0","name":"Nguyen - Chuong"},{"id":"mens-0-1","name":"Tech Chye - Wesley"},{"id":"mens-0-2","name":"Ck Kok - Han Wee"},{"id":"mens-0-3","name":"Azarudin - Jordon"}],"matches":[{"a":"mens-0-0","b":"mens-0-1","name":"MD-A1","time":"13:00","court":"A2","umpire":"Ck Kok","line1":"Azarudin","line2":"Jordon","sets":[[21,10]]},{"a":"mens-0-2","b":"mens-0-3","name":"MD-A2","time":"13:12","court":"A2","umpire":"Wesley","line1":"Nguyen","line2":"Chuong","sets":[[21,10]]},{"a":"mens-0-0","b":"mens-0-2","name":"MD-A3","time":"13:24","court":"A2","umpire":"Tech Chye","line1":"Azarudin","line2":"Jordon","sets":[[21,10]]},{"a":"mens-0-1","b":"mens-0-3","name":"MD-A4","time":"13:36","court":"A2","umpire":"Han Wee","line1":"Nguyen","line2":"Chuong","sets":[[21,10]]},{"a":"mens-0-0","b":"mens-0-3","name":"MD-A5","time":"13:48","court":"A2","umpire":"Tech Chye","line1":"Ck Kok","line2":"Han Wee","sets":[[21,10]]},{"a":"mens-0-1","b":"mens-0-2","name":"MD-A6","time":"14:00","court":"A2","umpire":"Jordon","line1":"Nguyen","line2":"Chuong","sets":[[21,10]]}]},{"letter":"B","pairs":[{"id":"mens-1-0","name":"Robin - Kwang Chung"},{"id":"mens-1-1","name":"Bing Hui - Hock Lian"},{"id":"mens-1-2","name":"Dennis Go - Wilson Low"}],"matches":[{"a":"mens-1-0","b":"mens-1-1","name":"MD-B1","time":"13:00","court":"A1","umpire":"Dennis Go","line1":"Wilson Low","line2":"","sets":[[21,10]]},{"a":"mens-1-0","b":"mens-1-2","name":"MD-B2","time":"13:12","court":"A1","umpire":"Bing Hui","line1":"Hock Lian","line2":"","sets":[[21,10]]},{"a":"mens-1-1","b":"mens-1-2","name":"MD-B3","time":"13:24","court":"A1","umpire":"Robin","line1":"Kwang Chung","line2":"","sets":[[21,10]]}]},{"letter":"C","pairs":[{"id":"mens-2-0","name":"Kai En - Aik Young"},{"id":"mens-2-1","name":"Kelvin - Jeffrey"},{"id":"mens-2-2","name":"Ehong - Wei Loon"},{"id":"mens-2-3","name":"Haur Guang - Boon Kai"}],"matches":[{"a":"mens-2-0","b":"mens-2-1","name":"MD-C1","time":"13:00","court":"A3","umpire":"Ehong","line1":"Haur Guang","line2":"Boon Kai","sets":[[21,10]]},{"a":"mens-2-2","b":"mens-2-3","name":"MD-C2","time":"13:12","court":"A3","umpire":"Jeffrey","line1":"Kai En","line2":"Aik Young","sets":[[21,10]]},{"a":"mens-2-0","b":"mens-2-2","name":"MD-C3","time":"13:24","court":"A3","umpire":"Kelvin","line1":"Haur Guang","line2":"Boon Kai","sets":[[21,10]]},{"a":"mens-2-1","b":"mens-2-3","name":"MD-C4","time":"13:36","court":"A3","umpire":"Wei Loon","line1":"Kai En","line2":"Aik Young","sets":[[21,10]]},{"a":"mens-2-0","b":"mens-2-3","name":"MD-C5","time":"13:48","court":"A3","umpire":"Kelvin","line1":"Ehong","line2":"Wei Loon","sets":[[21,10]]},{"a":"mens-2-1","b":"mens-2-2","name":"MD-C6","time":"14:00","court":"A3","umpire":"Boon Kai","line1":"Kai En","line2":"Aik Young","sets":[[21,10]]}]},{"letter":"D","pairs":[{"id":"mens-3-0","name":"Ilxilim - Kenneth"},{"id":"mens-3-1","name":"Yan Zhe - Zhen Sen"},{"id":"mens-3-2","name":"Cheng Teck - Xin Wei"},{"id":"mens-3-3","name":"Deebak - Janantha"}],"matches":[{"a":"mens-3-0","b":"mens-3-1","name":"MD-D1","time":"13:00","court":"A4","umpire":"Cheng Teck","line1":"Deebak","line2":"Janantha","sets":[[21,10]]},{"a":"mens-3-2","b":"mens-3-3","name":"MD-D2","time":"13:12","court":"A4","umpire":"Zhen Sen","line1":"Ilxilim","line2":"Kenneth","sets":[[21,10]]},{"a":"mens-3-0","b":"mens-3-2","name":"MD-D3","time":"13:24","court":"A4","umpire":"Yan Zhe","line1":"Deebak","line2":"Janantha","sets":[[21,10]]},{"a":"mens-3-1","b":"mens-3-3","name":"MD-D4","time":"13:36","court":"A4","umpire":"Xin Wei","line1":"Ilxilim","line2":"Kenneth","sets":[[21,10]]},{"a":"mens-3-0","b":"mens-3-3","name":"MD-D5","time":"13:48","court":"A4","umpire":"Yan Zhe","line1":"Cheng Teck","line2":"Xin Wei","sets":[[21,10]]},{"a":"mens-3-1","b":"mens-3-2","name":"MD-D6","time":"14:00","court":"A4","umpire":"Janantha","line1":"Ilxilim","line2":"Kenneth","sets":[[21,10]]}]},{"letter":"E","pairs":[{"id":"mens-4-0","name":"Maximillian - Sumit"},{"id":"mens-4-1","name":"Manuel - Steven Wu"},{"id":"mens-4-2","name":"Han Luen - Ting Ming"}],"matches":[{"a":"mens-4-0","b":"mens-4-1","name":"MD-E1","time":"13:00","court":"A5","umpire":"Han Luen","line1":"Ting Ming","line2":"","sets":[[21,10]]},{"a":"mens-4-0","b":"mens-4-2","name":"MD-E2","time":"13:12","court":"A5","umpire":"Manuel","line1":"Steven Wu","line2":"","sets":[[21,10]]},{"a":"mens-4-1","b":"mens-4-2","name":"MD-E3","time":"13:24","court":"A5","umpire":"Maximillian","line1":"Sumit","line2":"","sets":[[21,10]]}]},{"letter":"F","pairs":[{"id":"mens-5-0","name":"Wei Hao - Kenwit"},{"id":"mens-5-1","name":"Daniel - Philex"},{"id":"mens-5-2","name":"Phua Ziqin - Bong Eric"},{"id":"mens-5-3","name":"Yeoh - Brian"}],"matches":[{"a":"mens-5-0","b":"mens-5-1","name":"MD-F1","time":"13:00","court":"A6","umpire":"Phua Ziqin","line1":"Yeoh","line2":"Brian","sets":[[21,10]]},{"a":"mens-5-2","b":"mens-5-3","name":"MD-F2","time":"13:12","court":"A6","umpire":"Philex","line1":"Wei Hao","line2":"Kenwit","sets":[[21,10]]},{"a":"mens-5-0","b":"mens-5-2","name":"MD-F3","time":"13:24","court":"A6","umpire":"Daniel","line1":"Yeoh","line2":"Brian","sets":[[21,10]]},{"a":"mens-5-1","b":"mens-5-3","name":"MD-F4","time":"13:36","court":"A6","umpire":"Bong Eric","line1":"Wei Hao","line2":"Kenwit","sets":[[21,10]]},{"a":"mens-5-0","b":"mens-5-3","name":"MD-F5","time":"13:48","court":"A6","umpire":"Daniel","line1":"Phua Ziqin","line2":"Bong Eric","sets":[[21,10]]},{"a":"mens-5-1","b":"mens-5-2","name":"MD-F6","time":"14:00","court":"A6","umpire":"Brian","line1":"Wei Hao","line2":"Kenwit","sets":[[21,10]]}]}],"knockout":{"size":16,"rounds":[[{"top":{"id":"mens-0-0","name":"Nguyen - Chuong","ref":"#1"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-4-0","name":"Maximillian - Sumit","ref":"#5"},"bot":{"id":"mens-3-1","name":"Yan Zhe - Zhen Sen","ref":"#9"},"name":"MD-Round of 16","court":"A3","sets":[[null,null]],"time":"14:48","umpire":"Nguyen","line1":"Chuong","line2":"Ck Kok"},{"top":{"id":"mens-3-0","name":"Ilxilim - Kenneth","ref":"#4"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-2-1","name":"Kelvin - Jeffrey","ref":"#8"},"bot":{"id":"mens-4-1","name":"Manuel - Steven Wu","ref":"#12"},"name":"MD-Round of 16","court":"A4","sets":[[null,null]],"time":"14:48","umpire":"Han Wee","line1":"Azarudin","line2":"Jordon"},{"top":{"id":"mens-1-0","name":"Robin - Kwang Chung","ref":"#2"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-5-0","name":"Wei Hao - Kenwit","ref":"#6"},"bot":{"id":"mens-5-1","name":"Daniel - Philex","ref":"#10"},"name":"MD-Round of 16","court":"A8","sets":[[null,null]],"time":"14:48","umpire":"Dennis Go","line1":"Wilson Low","line2":"Kai En"},{"top":{"id":"mens-2-0","name":"Kai En - Aik Young","ref":"#3"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-0-1","name":"Tech Chye - Wesley","ref":"#7"},"bot":{"id":"mens-1-1","name":"Bing Hui - Hock Lian","ref":"#11"},"name":"MD-Round of 16","court":"A9","sets":[[null,null]],"time":"14:48","umpire":"Aik Young","line1":"Ehong","line2":"Wei Loon"}],[{"top":{"id":"mens-0-0","name":"Nguyen - Chuong","ref":"#1"},"bot":null,"name":"MD-Quarterfinal","court":"A3","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""},{"top":{"id":"mens-3-0","name":"Ilxilim - Kenneth","ref":"#4"},"bot":null,"name":"MD-Quarterfinal","court":"A4","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""},{"top":{"id":"mens-1-0","name":"Robin - Kwang Chung","ref":"#2"},"bot":null,"name":"MD-Quarterfinal","court":"A8","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""},{"top":{"id":"mens-2-0","name":"Kai En - Aik Young","ref":"#3"},"bot":null,"name":"MD-Quarterfinal","court":"A9","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"MD-Semifinal","court":"A3","sets":[[null,null]],"time":"15:48","umpire":"","line1":"","line2":""},{"top":null,"bot":null,"name":"MD-Semifinal","court":"A4","sets":[[null,null]],"time":"15:48","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"MD-Final","court":"A9","sets":[[null,null],[null,null],[null,null]],"time":"16:18","umpire":"","line1":"","line2":""}]],"rnames":["R16","QF","SF","F"],"draw":[{"topRef":"S1","botRef":"BYE"},{"topRef":"S5","botRef":"S9"},{"topRef":"S4","botRef":"BYE"},{"topRef":"S8","botRef":"S12"},{"topRef":"S2","botRef":"BYE"},{"topRef":"S6","botRef":"S10"},{"topRef":"S3","botRef":"BYE"},{"topRef":"S7","botRef":"S11"}],"third":{"top":null,"bot":null,"name":"MD-3rd place","court":"A3","time":"16:18","sets":[[null,null]],"umpire":"","line1":"","line2":""}},"koRoundSets":{"R16":1,"QF":1,"SF":1,"F":3}},"mixed":{"groups":[{"letter":"A","pairs":[{"id":"mixed-0-0","name":"Hock Lian - Yi Xuan"},{"id":"mixed-0-1","name":"Cheng Teck - Sok Chin"},{"id":"mixed-0-2","name":"Han Wee - Emily Tan"},{"id":"mixed-0-3","name":"Ehong - Jia Ee"}],"matches":[{"a":"mixed-0-0","b":"mixed-0-1","name":"XD-A1","time":"13:36","court":"A9","umpire":"Ck Kok","line1":"Robin","line2":"Kwang Chung","sets":[[21,10]]},{"a":"mixed-0-2","b":"mixed-0-3","name":"XD-A2","time":"14:12","court":"A2","umpire":"Tech Chye","line1":"Jeffrey","line2":"Ting Ming","sets":[[21,10]]},{"a":"mixed-0-0","b":"mixed-0-2","name":"XD-A3","time":"14:24","court":"A1","umpire":"Chuong","line1":"Aik Young","line2":"Steven Wu","sets":[[21,10]]},{"a":"mixed-0-1","b":"mixed-0-3","name":"XD-A4","time":"14:24","court":"A2","umpire":"Tech Chye","line1":"Jeffrey","line2":"Ting Ming","sets":[[21,10]]},{"a":"mixed-0-0","b":"mixed-0-3","name":"XD-A5","time":"14:36","court":"A1","umpire":"Chuong","line1":"Aik Young","line2":"Steven Wu","sets":[[21,10]]},{"a":"mixed-0-1","b":"mixed-0-2","name":"XD-A6","time":"14:36","court":"A2","umpire":"Tech Chye","line1":"Jeffrey","line2":"Ting Ming","sets":[[21,10]]}]},{"letter":"B","pairs":[{"id":"mixed-1-0","name":"Xin Wei - Bhavya"},{"id":"mixed-1-1","name":"Kelvin - Priscilla"},{"id":"mixed-1-2","name":"Wee Chuen - Aurkarn"},{"id":"mixed-1-3","name":"Wei Loon - Ivy Wee"}],"matches":[{"a":"mixed-1-0","b":"mixed-1-1","name":"XD-B1","time":"14:12","court":"A3","umpire":"Wesley","line1":"Haur Guang","line2":"Kenwit","sets":[[21,10]]},{"a":"mixed-1-2","b":"mixed-1-3","name":"XD-B2","time":"14:12","court":"A4","umpire":"Ck Kok","line1":"Ilxilim","line2":"Philex","sets":[[10,21]]},{"a":"mixed-1-0","b":"mixed-1-2","name":"XD-B3","time":"14:24","court":"A3","umpire":"Wesley","line1":"Haur Guang","line2":"Kenwit","sets":[[21,10]]},{"a":"mixed-1-1","b":"mixed-1-3","name":"XD-B4","time":"14:24","court":"A4","umpire":"Ck Kok","line1":"Ilxilim","line2":"Philex","sets":[[10,21]]},{"a":"mixed-1-0","b":"mixed-1-3","name":"XD-B5","time":"14:36","court":"A3","umpire":"Wesley","line1":"Haur Guang","line2":"Kenwit","sets":[[10,21]]},{"a":"mixed-1-1","b":"mixed-1-2","name":"XD-B6","time":"14:36","court":"A4","umpire":"Ck Kok","line1":"Ilxilim","line2":"Philex","sets":[[21,10]]}]},{"letter":"C","pairs":[{"id":"mixed-2-0","name":"Boon Kai - Girlene"},{"id":"mixed-2-1","name":"Dennis Go - Josephine"},{"id":"mixed-2-2","name":"Yeoh - Xiao Jun"},{"id":"mixed-2-3","name":"Janantha - Sylvie"}],"matches":[{"a":"mixed-2-0","b":"mixed-2-1","name":"XD-C1","time":"14:12","court":"A5","umpire":"Azarudin","line1":"Kenneth","line2":"Phua Ziqin","sets":[[21,10]]},{"a":"mixed-2-2","b":"mixed-2-3","name":"XD-C2","time":"14:12","court":"A6","umpire":"Jordon","line1":"Yan Zhe","line2":"Bong Eric","sets":[[21,10]]},{"a":"mixed-2-0","b":"mixed-2-2","name":"XD-C3","time":"14:24","court":"A5","umpire":"Azarudin","line1":"Kenneth","line2":"Phua Ziqin","sets":[[21,10]]},{"a":"mixed-2-1","b":"mixed-2-3","name":"XD-C4","time":"14:24","court":"A6","umpire":"Jordon","line1":"Yan Zhe","line2":"Bong Eric","sets":[[21,10]]},{"a":"mixed-2-0","b":"mixed-2-3","name":"XD-C5","time":"14:36","court":"A5","umpire":"Azarudin","line1":"Kenneth","line2":"Phua Ziqin","sets":[[21,10]]},{"a":"mixed-2-1","b":"mixed-2-2","name":"XD-C6","time":"14:00","court":"A9","umpire":"Azarudin","line1":"Robin","line2":"Kwang Chung","sets":[[21,10]]}]},{"letter":"D","pairs":[{"id":"mixed-3-0","name":"Wei Hao - Theodora"},{"id":"mixed-3-1","name":"Zhen Sen - Kay Sin"},{"id":"mixed-3-2","name":"Boon Ping - Keat Yin"},{"id":"mixed-3-3","name":"Bing Hui - Yik Ru"}],"matches":[{"a":"mixed-3-0","b":"mixed-3-1","name":"XD-D1","time":"14:12","court":"A7","umpire":"Robin","line1":"Deebak","line2":"Brian","sets":[[21,10]]},{"a":"mixed-3-2","b":"mixed-3-3","name":"XD-D2","time":"13:36","court":"A10","umpire":"Dennis Go","line1":"Wilson Low","line2":"Ehong","sets":[[21,10]]},{"a":"mixed-3-0","b":"mixed-3-2","name":"XD-D3","time":"14:24","court":"A7","umpire":"Robin","line1":"Deebak","line2":"Brian","sets":[[21,10]]},{"a":"mixed-3-1","b":"mixed-3-3","name":"XD-D4","time":"13:48","court":"A9","umpire":"Wesley","line1":"Robin","line2":"Kwang Chung","sets":[[21,10]]},{"a":"mixed-3-0","b":"mixed-3-3","name":"XD-D5","time":"14:36","court":"A7","umpire":"Robin","line1":"Deebak","line2":"Brian","sets":[[21,10]]},{"a":"mixed-3-1","b":"mixed-3-2","name":"XD-D6","time":"14:36","court":"A8","umpire":"Kwang Chung","line1":"Maximillian","line2":"","sets":[[21,10]]}]},{"letter":"E","pairs":[{"id":"mixed-4-0","name":"Nguyen - Shiyee"},{"id":"mixed-4-1","name":"Daniel - Lee Yu"},{"id":"mixed-4-2","name":"Han Luen - Khai Xin"},{"id":"mixed-4-3","name":"Zi Harn - Yu Xuan"}],"matches":[{"a":"mixed-4-0","b":"mixed-4-1","name":"XD-E1","time":"14:12","court":"A9","umpire":"Wilson Low","line1":"Sumit","line2":"","sets":[[10,21]]},{"a":"mixed-4-2","b":"mixed-4-3","name":"XD-E2","time":"13:36","court":"A8","umpire":"Maximillian","line1":"Sumit","line2":"Manuel","sets":[[21,10]]},{"a":"mixed-4-0","b":"mixed-4-2","name":"XD-E3","time":"14:24","court":"A9","umpire":"Wilson Low","line1":"Sumit","line2":"","sets":[[21,10]]},{"a":"mixed-4-1","b":"mixed-4-3","name":"XD-E4","time":"14:24","court":"A10","umpire":"Kai En","line1":"Manuel","line2":"","sets":[[21,10]]},{"a":"mixed-4-0","b":"mixed-4-3","name":"XD-E5","time":"14:36","court":"A9","umpire":"Wilson Low","line1":"Sumit","line2":"","sets":[[21,10]]},{"a":"mixed-4-1","b":"mixed-4-2","name":"XD-E6","time":"14:36","court":"A10","umpire":"Kai En","line1":"Manuel","line2":"","sets":[[21,10]]}]}],"knockout":{"size":16,"rounds":[[{"top":{"id":"mixed-0-0","name":"Hock Lian - Yi Xuan","ref":"#1"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-4-1","name":"Daniel - Lee Yu","ref":"#5"},"bot":{"id":"mixed-3-1","name":"Zhen Sen - Kay Sin","ref":"#9"},"name":"XD-Round of 16","court":"A3","sets":[[null,null]],"time":"15:18","umpire":"Tech Chye","line1":"Wesley","line2":"Robin"},{"top":{"id":"mixed-3-0","name":"Wei Hao - Theodora","ref":"#4"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-2-1","name":"Dennis Go - Josephine","ref":"#8"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-1-3","name":"Wei Loon - Ivy Wee","ref":"#2"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-0-1","name":"Cheng Teck - Sok Chin","ref":"#6"},"bot":{"id":"mixed-4-0","name":"Nguyen - Shiyee","ref":"#10"},"name":"XD-Round of 16","court":"A4","sets":[[null,null]],"time":"15:18","umpire":"Kwang Chung","line1":"Bing Hui","line2":"Hock Lian"},{"top":{"id":"mixed-2-0","name":"Boon Kai - Girlene","ref":"#3"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-1-0","name":"Xin Wei - Bhavya","ref":"#7"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""}],[{"top":{"id":"mixed-0-0","name":"Hock Lian - Yi Xuan","ref":"#1"},"bot":null,"name":"XD-Quarterfinal","court":"A3","sets":[[null,null]],"time":"15:33","umpire":"","line1":"","line2":""},{"top":{"id":"mixed-3-0","name":"Wei Hao - Theodora","ref":"#4"},"bot":{"id":"mixed-2-1","name":"Dennis Go - Josephine","ref":"#8"},"name":"XD-Quarterfinal","court":"A4","sets":[[null,null]],"time":"15:33","umpire":"Kelvin","line1":"Jeffrey","line2":"Yan Zhe"},{"top":{"id":"mixed-1-3","name":"Wei Loon - Ivy Wee","ref":"#2"},"bot":null,"name":"XD-Quarterfinal","court":"A8","sets":[[null,null]],"time":"15:33","umpire":"","line1":"","line2":""},{"top":{"id":"mixed-2-0","name":"Boon Kai - Girlene","ref":"#3"},"bot":{"id":"mixed-1-0","name":"Xin Wei - Bhavya","ref":"#7"},"name":"XD-Quarterfinal","court":"A9","sets":[[null,null]],"time":"15:33","umpire":"Zhen Sen","line1":"Deebak","line2":"Janantha"}],[{"top":null,"bot":null,"name":"XD-Semifinal","court":"A3","sets":[[null,null]],"time":"16:03","umpire":"","line1":"","line2":""},{"top":null,"bot":null,"name":"XD-Semifinal","court":"A4","sets":[[null,null]],"time":"16:03","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"XD-Final","court":"A8","sets":[[null,null],[null,null],[null,null]],"time":"16:48","umpire":"","line1":"","line2":""}]],"rnames":["R16","QF","SF","F"],"draw":[{"topRef":"S1","botRef":"BYE"},{"topRef":"S5","botRef":"S9"},{"topRef":"S4","botRef":"BYE"},{"topRef":"S8","botRef":"S12"},{"topRef":"S2","botRef":"BYE"},{"topRef":"S6","botRef":"S10"},{"topRef":"S3","botRef":"BYE"},{"topRef":"S7","botRef":"S11"}],"third":{"top":null,"bot":null,"name":"XD-3rd place","court":"A3","time":"16:48","sets":[[null,null]],"umpire":"","line1":"","line2":""}},"koRoundSets":{"R16":1,"QF":1,"SF":1,"F":3}},"women":{"groups":[{"letter":"A","pairs":[{"id":"women-0-0","name":"Kay Sin - Priscilla"},{"id":"women-0-1","name":"Keat Yin - Lee Yu"},{"id":"women-0-2","name":"Aurkarn - Ivy Wee"},{"id":"women-0-3","name":"Bhavya - Khai Xin"}],"matches":[{"a":"women-0-0","b":"women-0-1","name":"WD-A1","time":"13:00","court":"A7","umpire":"Han Wee","line1":"Wei Loon","line2":"Xin Wei","sets":[[21,10]]},{"a":"women-0-2","b":"women-0-3","name":"WD-A2","time":"13:00","court":"A8","umpire":"Bong Eric","line1":"Sok Chin","line2":"Jia Ee","sets":[[21,10]]},{"a":"women-0-0","b":"women-0-2","name":"WD-A3","time":"13:12","court":"A7","umpire":"Tech Chye","line1":"Kelvin","line2":"Yan Zhe","sets":[[10,21]]},{"a":"women-0-1","b":"women-0-3","name":"WD-A4","time":"13:12","court":"A8","umpire":"Daniel","line1":"Sok Chin","line2":"Jia Ee","sets":[[21,10]]},{"a":"women-0-0","b":"women-0-3","name":"WD-A5","time":"13:24","court":"A7","umpire":"Wesley","line1":"Jeffrey","line2":"Zhen Sen","sets":[[21,10]]},{"a":"women-0-1","b":"women-0-2","name":"WD-A6","time":"13:24","court":"A8","umpire":"Philex","line1":"Sok Chin","line2":"Jia Ee","sets":[[10,21]]}]},{"letter":"B","pairs":[{"id":"women-1-0","name":"Sylvie - Xiao Jun"},{"id":"women-1-1","name":"Emily Tan - Yik Ru"},{"id":"women-1-2","name":"Girlene - Theodora"},{"id":"women-1-3","name":"Yu Xuan - Yi Xuan"}],"matches":[{"a":"women-1-0","b":"women-1-1","name":"WD-B1","time":"13:00","court":"A9","umpire":"Wee Chuen","line1":"Josephine","line2":"Boon Ping","sets":[[21,10]]},{"a":"women-1-2","b":"women-1-3","name":"WD-B2","time":"13:00","court":"A10","umpire":"Shiyee","line1":"Zi Harn","line2":"","sets":[[21,10]]},{"a":"women-1-0","b":"women-1-2","name":"WD-B3","time":"13:12","court":"A9","umpire":"Wee Chuen","line1":"Josephine","line2":"Boon Ping","sets":[[21,10]]},{"a":"women-1-1","b":"women-1-3","name":"WD-B4","time":"13:12","court":"A10","umpire":"Shiyee","line1":"Zi Harn","line2":"","sets":[[21,10]]},{"a":"women-1-0","b":"women-1-3","name":"WD-B5","time":"13:24","court":"A9","umpire":"Wee Chuen","line1":"Josephine","line2":"Boon Ping","sets":[[21,10]]},{"a":"women-1-1","b":"women-1-2","name":"WD-B6","time":"13:24","court":"A10","umpire":"Shiyee","line1":"Zi Harn","line2":"","sets":[[21,10]]}]}],"knockout":{"size":4,"rounds":[[{"top":{"id":"women-0-0","name":"Kay Sin - Priscilla","ref":"A2"},"bot":{"id":"women-1-0","name":"Sylvie - Xiao Jun","ref":"B1"},"name":"WD-Semifinal","court":"A2","sets":[[null,null]],"time":"14:48","umpire":"Haur Guang","line1":"Boon Kai","line2":"Ilxilim"},{"top":{"id":"women-1-1","name":"Emily Tan - Yik Ru","ref":"B2"},"bot":{"id":"women-0-2","name":"Aurkarn - Ivy Wee","ref":"A1"},"name":"WD-Semifinal","court":"A7","sets":[[null,null]],"time":"14:48","umpire":"Kenneth","line1":"Cheng Teck","line2":"Xin Wei"}],[{"top":null,"bot":null,"name":"WD-Final","court":"A8","sets":[[null,null],[null,null],[null,null]],"time":"16:18","umpire":"","line1":"","line2":""}]],"rnames":["SF","F"],"draw":[{"topRef":"A2","botRef":"B1"},{"topRef":"B2","botRef":"A1"}],"third":{"top":null,"bot":null,"name":"WD-3rd place","court":"A7","time":"15:48","sets":[[null,null]],"umpire":"","line1":"","line2":""}},"koRoundSets":{"SF":1,"F":3}}};
+const SEED_DB = {"mens":{"groups":[{"letter":"A","pairs":[{"id":"mens-0-0","name":"Nguyen - Chuong"},{"id":"mens-0-1","name":"Tech Chye - Wesley"},{"id":"mens-0-2","name":"Ck Kok - Han Wee"},{"id":"mens-0-3","name":"Azarudin - Jordon"}],"matches":[{"a":"mens-0-0","b":"mens-0-1","name":"MD-A1","time":"13:00","court":"A2","umpire":"Ck Kok","line1":"Azarudin","line2":"Jordon","sets":[[21,10]]},{"a":"mens-0-2","b":"mens-0-3","name":"MD-A2","time":"13:12","court":"A2","umpire":"Wesley","line1":"Nguyen","line2":"Chuong","sets":[[21,10]]},{"a":"mens-0-0","b":"mens-0-2","name":"MD-A3","time":"13:24","court":"A2","umpire":"Tech Chye","line1":"Azarudin","line2":"Jordon","sets":[[21,10]]},{"a":"mens-0-1","b":"mens-0-3","name":"MD-A4","time":"13:36","court":"A2","umpire":"Han Wee","line1":"Nguyen","line2":"Chuong","sets":[[21,10]]},{"a":"mens-0-0","b":"mens-0-3","name":"MD-A5","time":"13:48","court":"A2","umpire":"Tech Chye","line1":"Ck Kok","line2":"Han Wee","sets":[[21,10]]},{"a":"mens-0-1","b":"mens-0-2","name":"MD-A6","time":"14:00","court":"A2","umpire":"Jordon","line1":"Nguyen","line2":"Chuong","sets":[[21,10]]}]},{"letter":"B","pairs":[{"id":"mens-1-0","name":"Robin - Kwang Chung"},{"id":"mens-1-1","name":"Bing Hui - Hock Lian"},{"id":"mens-1-2","name":"Dennis Go - Wilson Low"}],"matches":[{"a":"mens-1-0","b":"mens-1-1","name":"MD-B1","time":"13:00","court":"A1","umpire":"Dennis Go","line1":"Wilson Low","line2":"","sets":[[21,10]]},{"a":"mens-1-0","b":"mens-1-2","name":"MD-B2","time":"13:12","court":"A1","umpire":"Bing Hui","line1":"Hock Lian","line2":"","sets":[[21,10]]},{"a":"mens-1-1","b":"mens-1-2","name":"MD-B3","time":"13:24","court":"A1","umpire":"Robin","line1":"Kwang Chung","line2":"","sets":[[21,10]]}]},{"letter":"C","pairs":[{"id":"mens-2-0","name":"Kai En - Aik Young"},{"id":"mens-2-1","name":"Kelvin - Jeffrey"},{"id":"mens-2-2","name":"Ehong - Wei Loon"},{"id":"mens-2-3","name":"Haur Guang - Boon Kai"}],"matches":[{"a":"mens-2-0","b":"mens-2-1","name":"MD-C1","time":"13:00","court":"A3","umpire":"Ehong","line1":"Haur Guang","line2":"Boon Kai","sets":[[21,10]]},{"a":"mens-2-2","b":"mens-2-3","name":"MD-C2","time":"13:12","court":"A3","umpire":"Jeffrey","line1":"Kai En","line2":"Aik Young","sets":[[21,10]]},{"a":"mens-2-0","b":"mens-2-2","name":"MD-C3","time":"13:24","court":"A3","umpire":"Kelvin","line1":"Haur Guang","line2":"Boon Kai","sets":[[21,10]]},{"a":"mens-2-1","b":"mens-2-3","name":"MD-C4","time":"13:36","court":"A3","umpire":"Wei Loon","line1":"Kai En","line2":"Aik Young","sets":[[21,10]]},{"a":"mens-2-0","b":"mens-2-3","name":"MD-C5","time":"13:48","court":"A3","umpire":"Kelvin","line1":"Ehong","line2":"Wei Loon","sets":[[21,10]]},{"a":"mens-2-1","b":"mens-2-2","name":"MD-C6","time":"14:00","court":"A3","umpire":"Boon Kai","line1":"Kai En","line2":"Aik Young","sets":[[21,10]]}]},{"letter":"D","pairs":[{"id":"mens-3-0","name":"Ilxilim - Kenneth"},{"id":"mens-3-1","name":"Yan Zhe - Zhen Sen"},{"id":"mens-3-2","name":"Cheng Teck - Xin Wei"},{"id":"mens-3-3","name":"Deebak - Janantha"}],"matches":[{"a":"mens-3-0","b":"mens-3-1","name":"MD-D1","time":"13:00","court":"A4","umpire":"Cheng Teck","line1":"Deebak","line2":"Janantha","sets":[[21,10]]},{"a":"mens-3-2","b":"mens-3-3","name":"MD-D2","time":"13:12","court":"A4","umpire":"Zhen Sen","line1":"Ilxilim","line2":"Kenneth","sets":[[21,10]]},{"a":"mens-3-0","b":"mens-3-2","name":"MD-D3","time":"13:24","court":"A4","umpire":"Yan Zhe","line1":"Deebak","line2":"Janantha","sets":[[21,10]]},{"a":"mens-3-1","b":"mens-3-3","name":"MD-D4","time":"13:36","court":"A4","umpire":"Xin Wei","line1":"Ilxilim","line2":"Kenneth","sets":[[21,10]]},{"a":"mens-3-0","b":"mens-3-3","name":"MD-D5","time":"13:48","court":"A4","umpire":"Yan Zhe","line1":"Cheng Teck","line2":"Xin Wei","sets":[[21,10]]},{"a":"mens-3-1","b":"mens-3-2","name":"MD-D6","time":"14:00","court":"A4","umpire":"Janantha","line1":"Ilxilim","line2":"Kenneth","sets":[[21,10]]}]},{"letter":"E","pairs":[{"id":"mens-4-0","name":"Maximillian - Sumit"},{"id":"mens-4-1","name":"Manuel - Steven Wu"},{"id":"mens-4-2","name":"Han Luen - Ting Ming"}],"matches":[{"a":"mens-4-0","b":"mens-4-1","name":"MD-E1","time":"13:00","court":"A5","umpire":"Han Luen","line1":"Ting Ming","line2":"","sets":[[21,10]]},{"a":"mens-4-0","b":"mens-4-2","name":"MD-E2","time":"13:12","court":"A5","umpire":"Manuel","line1":"Steven Wu","line2":"","sets":[[21,10]]},{"a":"mens-4-1","b":"mens-4-2","name":"MD-E3","time":"13:24","court":"A5","umpire":"Maximillian","line1":"Sumit","line2":"","sets":[[21,10]]}]},{"letter":"F","pairs":[{"id":"mens-5-0","name":"Wei Hao - Kenwit"},{"id":"mens-5-1","name":"Daniel - Philex"},{"id":"mens-5-2","name":"Phua Ziqin - Bong Eric"},{"id":"mens-5-3","name":"Yeoh - Brian"}],"matches":[{"a":"mens-5-0","b":"mens-5-1","name":"MD-F1","time":"13:00","court":"A6","umpire":"Phua Ziqin","line1":"Yeoh","line2":"Brian","sets":[[21,10]]},{"a":"mens-5-2","b":"mens-5-3","name":"MD-F2","time":"13:12","court":"A6","umpire":"Philex","line1":"Wei Hao","line2":"Kenwit","sets":[[21,10]]},{"a":"mens-5-0","b":"mens-5-2","name":"MD-F3","time":"13:24","court":"A6","umpire":"Daniel","line1":"Yeoh","line2":"Brian","sets":[[21,10]]},{"a":"mens-5-1","b":"mens-5-3","name":"MD-F4","time":"13:36","court":"A6","umpire":"Bong Eric","line1":"Wei Hao","line2":"Kenwit","sets":[[21,10]]},{"a":"mens-5-0","b":"mens-5-3","name":"MD-F5","time":"13:48","court":"A6","umpire":"Daniel","line1":"Phua Ziqin","line2":"Bong Eric","sets":[[21,10]]},{"a":"mens-5-1","b":"mens-5-2","name":"MD-F6","time":"14:00","court":"A6","umpire":"Brian","line1":"Wei Hao","line2":"Kenwit","sets":[[21,10]]}]}],"knockout":{"size":16,"rounds":[[{"top":{"id":"mens-0-0","name":"Nguyen - Chuong","ref":"#1"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-4-0","name":"Maximillian - Sumit","ref":"#5"},"bot":{"id":"mens-3-1","name":"Yan Zhe - Zhen Sen","ref":"#9"},"name":"MD-Round of 16","court":"A3","sets":[[null,null]],"time":"14:48","umpire":"","line1":"","line2":""},{"top":{"id":"mens-3-0","name":"Ilxilim - Kenneth","ref":"#4"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-2-1","name":"Kelvin - Jeffrey","ref":"#8"},"bot":{"id":"mens-4-1","name":"Manuel - Steven Wu","ref":"#12"},"name":"MD-Round of 16","court":"A4","sets":[[null,null]],"time":"14:48","umpire":"","line1":"","line2":""},{"top":{"id":"mens-1-0","name":"Robin - Kwang Chung","ref":"#2"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-5-0","name":"Wei Hao - Kenwit","ref":"#6"},"bot":{"id":"mens-5-1","name":"Daniel - Philex","ref":"#10"},"name":"MD-Round of 16","court":"A8","sets":[[null,null]],"time":"14:48","umpire":"","line1":"","line2":""},{"top":{"id":"mens-2-0","name":"Kai En - Aik Young","ref":"#3"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mens-0-1","name":"Tech Chye - Wesley","ref":"#7"},"bot":{"id":"mens-1-1","name":"Bing Hui - Hock Lian","ref":"#11"},"name":"MD-Round of 16","court":"A9","sets":[[null,null]],"time":"14:48","umpire":"","line1":"","line2":""}],[{"top":{"id":"mens-0-0","name":"Nguyen - Chuong","ref":"#1"},"bot":null,"name":"MD-Quarterfinal","court":"A3","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""},{"top":{"id":"mens-3-0","name":"Ilxilim - Kenneth","ref":"#4"},"bot":null,"name":"MD-Quarterfinal","court":"A4","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""},{"top":{"id":"mens-1-0","name":"Robin - Kwang Chung","ref":"#2"},"bot":null,"name":"MD-Quarterfinal","court":"A8","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""},{"top":{"id":"mens-2-0","name":"Kai En - Aik Young","ref":"#3"},"bot":null,"name":"MD-Quarterfinal","court":"A9","sets":[[null,null]],"time":"15:03","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"MD-Semifinal","court":"A3","sets":[[null,null]],"time":"15:48","umpire":"","line1":"","line2":""},{"top":null,"bot":null,"name":"MD-Semifinal","court":"A4","sets":[[null,null]],"time":"15:48","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"MD-Final","court":"A9","sets":[[null,null],[null,null],[null,null]],"time":"16:18","umpire":"","line1":"","line2":""}]],"rnames":["R16","QF","SF","F"],"draw":[{"topRef":"S1","botRef":"BYE"},{"topRef":"S5","botRef":"S9"},{"topRef":"S4","botRef":"BYE"},{"topRef":"S8","botRef":"S12"},{"topRef":"S2","botRef":"BYE"},{"topRef":"S6","botRef":"S10"},{"topRef":"S3","botRef":"BYE"},{"topRef":"S7","botRef":"S11"}],"third":{"top":null,"bot":null,"name":"MD-3rd place","court":"A3","time":"16:18","sets":[[null,null]],"umpire":"","line1":"","line2":""}},"koRoundSets":{"R16":1,"QF":1,"SF":1,"F":3}},"mixed":{"groups":[{"letter":"A","pairs":[{"id":"mixed-0-0","name":"Hock Lian - Yi Xuan"},{"id":"mixed-0-1","name":"Cheng Teck - Sok Chin"},{"id":"mixed-0-2","name":"Han Wee - Emily Tan"},{"id":"mixed-0-3","name":"Ehong - Jia Ee"}],"matches":[{"a":"mixed-0-0","b":"mixed-0-1","name":"XD-A1","time":"13:36","court":"A9","umpire":"Ck Kok","line1":"Robin","line2":"Kwang Chung","sets":[[21,10]]},{"a":"mixed-0-2","b":"mixed-0-3","name":"XD-A2","time":"14:12","court":"A2","umpire":"Tech Chye","line1":"Jeffrey","line2":"Ting Ming","sets":[[21,10]]},{"a":"mixed-0-0","b":"mixed-0-2","name":"XD-A3","time":"14:24","court":"A1","umpire":"Chuong","line1":"Aik Young","line2":"Steven Wu","sets":[[21,10]]},{"a":"mixed-0-1","b":"mixed-0-3","name":"XD-A4","time":"14:24","court":"A2","umpire":"Tech Chye","line1":"Jeffrey","line2":"Ting Ming","sets":[[21,10]]},{"a":"mixed-0-0","b":"mixed-0-3","name":"XD-A5","time":"14:36","court":"A1","umpire":"Chuong","line1":"Aik Young","line2":"Steven Wu","sets":[[21,10]]},{"a":"mixed-0-1","b":"mixed-0-2","name":"XD-A6","time":"14:36","court":"A2","umpire":"Tech Chye","line1":"Jeffrey","line2":"Ting Ming","sets":[[21,10]]}]},{"letter":"B","pairs":[{"id":"mixed-1-0","name":"Xin Wei - Bhavya"},{"id":"mixed-1-1","name":"Kelvin - Priscilla"},{"id":"mixed-1-2","name":"Wee Chuen - Aurkarn"},{"id":"mixed-1-3","name":"Wei Loon - Ivy Wee"}],"matches":[{"a":"mixed-1-0","b":"mixed-1-1","name":"XD-B1","time":"14:12","court":"A3","umpire":"Wesley","line1":"Haur Guang","line2":"Kenwit","sets":[[21,10]]},{"a":"mixed-1-2","b":"mixed-1-3","name":"XD-B2","time":"14:12","court":"A4","umpire":"Ck Kok","line1":"Ilxilim","line2":"Philex","sets":[[10,21]]},{"a":"mixed-1-0","b":"mixed-1-2","name":"XD-B3","time":"14:24","court":"A3","umpire":"Wesley","line1":"Haur Guang","line2":"Kenwit","sets":[[21,10]]},{"a":"mixed-1-1","b":"mixed-1-3","name":"XD-B4","time":"14:24","court":"A4","umpire":"Ck Kok","line1":"Ilxilim","line2":"Philex","sets":[[10,21]]},{"a":"mixed-1-0","b":"mixed-1-3","name":"XD-B5","time":"14:36","court":"A3","umpire":"Wesley","line1":"Haur Guang","line2":"Kenwit","sets":[[10,21]]},{"a":"mixed-1-1","b":"mixed-1-2","name":"XD-B6","time":"14:36","court":"A4","umpire":"Ck Kok","line1":"Ilxilim","line2":"Philex","sets":[[21,10]]}]},{"letter":"C","pairs":[{"id":"mixed-2-0","name":"Boon Kai - Girlene"},{"id":"mixed-2-1","name":"Dennis Go - Josephine"},{"id":"mixed-2-2","name":"Yeoh - Xiao Jun"},{"id":"mixed-2-3","name":"Janantha - Sylvie"}],"matches":[{"a":"mixed-2-0","b":"mixed-2-1","name":"XD-C1","time":"14:12","court":"A5","umpire":"Azarudin","line1":"Kenneth","line2":"Phua Ziqin","sets":[[21,10]]},{"a":"mixed-2-2","b":"mixed-2-3","name":"XD-C2","time":"14:12","court":"A6","umpire":"Jordon","line1":"Yan Zhe","line2":"Bong Eric","sets":[[21,10]]},{"a":"mixed-2-0","b":"mixed-2-2","name":"XD-C3","time":"14:24","court":"A5","umpire":"Azarudin","line1":"Kenneth","line2":"Phua Ziqin","sets":[[21,10]]},{"a":"mixed-2-1","b":"mixed-2-3","name":"XD-C4","time":"14:24","court":"A6","umpire":"Jordon","line1":"Yan Zhe","line2":"Bong Eric","sets":[[21,10]]},{"a":"mixed-2-0","b":"mixed-2-3","name":"XD-C5","time":"14:36","court":"A5","umpire":"Azarudin","line1":"Kenneth","line2":"Phua Ziqin","sets":[[21,10]]},{"a":"mixed-2-1","b":"mixed-2-2","name":"XD-C6","time":"14:00","court":"A9","umpire":"Azarudin","line1":"Robin","line2":"Kwang Chung","sets":[[21,10]]}]},{"letter":"D","pairs":[{"id":"mixed-3-0","name":"Wei Hao - Theodora"},{"id":"mixed-3-1","name":"Zhen Sen - Kay Sin"},{"id":"mixed-3-2","name":"Boon Ping - Keat Yin"},{"id":"mixed-3-3","name":"Bing Hui - Yik Ru"}],"matches":[{"a":"mixed-3-0","b":"mixed-3-1","name":"XD-D1","time":"14:12","court":"A7","umpire":"Robin","line1":"Deebak","line2":"Brian","sets":[[21,10]]},{"a":"mixed-3-2","b":"mixed-3-3","name":"XD-D2","time":"13:36","court":"A10","umpire":"Dennis Go","line1":"Wilson Low","line2":"Ehong","sets":[[21,10]]},{"a":"mixed-3-0","b":"mixed-3-2","name":"XD-D3","time":"14:24","court":"A7","umpire":"Robin","line1":"Deebak","line2":"Brian","sets":[[21,10]]},{"a":"mixed-3-1","b":"mixed-3-3","name":"XD-D4","time":"13:48","court":"A9","umpire":"Wesley","line1":"Robin","line2":"Kwang Chung","sets":[[21,10]]},{"a":"mixed-3-0","b":"mixed-3-3","name":"XD-D5","time":"14:36","court":"A7","umpire":"Robin","line1":"Deebak","line2":"Brian","sets":[[21,10]]},{"a":"mixed-3-1","b":"mixed-3-2","name":"XD-D6","time":"14:36","court":"A8","umpire":"Kwang Chung","line1":"Maximillian","line2":"","sets":[[21,10]]}]},{"letter":"E","pairs":[{"id":"mixed-4-0","name":"Nguyen - Shiyee"},{"id":"mixed-4-1","name":"Daniel - Lee Yu"},{"id":"mixed-4-2","name":"Han Luen - Khai Xin"},{"id":"mixed-4-3","name":"Zi Harn - Yu Xuan"}],"matches":[{"a":"mixed-4-0","b":"mixed-4-1","name":"XD-E1","time":"14:12","court":"A9","umpire":"Wilson Low","line1":"Sumit","line2":"","sets":[[10,21]]},{"a":"mixed-4-2","b":"mixed-4-3","name":"XD-E2","time":"13:36","court":"A8","umpire":"Maximillian","line1":"Sumit","line2":"Manuel","sets":[[21,10]]},{"a":"mixed-4-0","b":"mixed-4-2","name":"XD-E3","time":"14:24","court":"A9","umpire":"Wilson Low","line1":"Sumit","line2":"","sets":[[21,10]]},{"a":"mixed-4-1","b":"mixed-4-3","name":"XD-E4","time":"14:24","court":"A10","umpire":"Kai En","line1":"Manuel","line2":"","sets":[[21,10]]},{"a":"mixed-4-0","b":"mixed-4-3","name":"XD-E5","time":"14:36","court":"A9","umpire":"Wilson Low","line1":"Sumit","line2":"","sets":[[21,10]]},{"a":"mixed-4-1","b":"mixed-4-2","name":"XD-E6","time":"14:36","court":"A10","umpire":"Kai En","line1":"Manuel","line2":"","sets":[[21,10]]}]}],"knockout":{"size":16,"rounds":[[{"top":{"id":"mixed-0-0","name":"Hock Lian - Yi Xuan","ref":"#1"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-4-1","name":"Daniel - Lee Yu","ref":"#5"},"bot":{"id":"mixed-3-1","name":"Zhen Sen - Kay Sin","ref":"#9"},"name":"XD-Round of 16","court":"A3","sets":[[null,null]],"time":"15:18","umpire":"","line1":"","line2":""},{"top":{"id":"mixed-3-0","name":"Wei Hao - Theodora","ref":"#4"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-2-1","name":"Dennis Go - Josephine","ref":"#8"},"bot":{"bye":true},"name":"XD-Round of 16","court":"A8","sets":[[null,null]],"time":"15:18"},{"top":{"id":"mixed-1-3","name":"Wei Loon - Ivy Wee","ref":"#2"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-0-1","name":"Cheng Teck - Sok Chin","ref":"#6"},"bot":{"id":"mixed-4-0","name":"Nguyen - Shiyee","ref":"#10"},"name":"XD-Round of 16","court":"A4","sets":[[null,null]],"time":"15:18","umpire":"","line1":"","line2":""},{"top":{"id":"mixed-2-0","name":"Boon Kai - Girlene","ref":"#3"},"bot":{"bye":true},"name":"","court":"","sets":[[null,null]],"time":""},{"top":{"id":"mixed-1-0","name":"Xin Wei - Bhavya","ref":"#7"},"bot":{"bye":true},"name":"XD-Round of 16","court":"A9","sets":[[null,null]],"time":"15:18"}],[{"top":{"id":"mixed-0-0","name":"Hock Lian - Yi Xuan","ref":"#1"},"bot":null,"name":"XD-Quarterfinal","court":"A3","sets":[[null,null]],"time":"15:33","umpire":"","line1":"","line2":""},{"top":{"id":"mixed-3-0","name":"Wei Hao - Theodora","ref":"#4"},"bot":{"id":"mixed-2-1","name":"Dennis Go - Josephine","ref":"#8"},"name":"XD-Quarterfinal","court":"A4","sets":[[null,null]],"time":"15:33","umpire":"","line1":"","line2":""},{"top":{"id":"mixed-1-3","name":"Wei Loon - Ivy Wee","ref":"#2"},"bot":null,"name":"XD-Quarterfinal","court":"A8","sets":[[null,null]],"time":"15:33","umpire":"","line1":"","line2":""},{"top":{"id":"mixed-2-0","name":"Boon Kai - Girlene","ref":"#3"},"bot":{"id":"mixed-1-0","name":"Xin Wei - Bhavya","ref":"#7"},"name":"XD-Quarterfinal","court":"A9","sets":[[null,null]],"time":"15:33","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"XD-Semifinal","court":"A3","sets":[[null,null]],"time":"16:03","umpire":"","line1":"","line2":""},{"top":null,"bot":null,"name":"XD-Semifinal","court":"A4","sets":[[null,null]],"time":"16:03","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"XD-Final","court":"A8","sets":[[null,null],[null,null],[null,null]],"time":"16:53","umpire":"","line1":"","line2":""}]],"rnames":["R16","QF","SF","F"],"draw":[{"topRef":"S1","botRef":"BYE"},{"topRef":"S5","botRef":"S9"},{"topRef":"S4","botRef":"BYE"},{"topRef":"S8","botRef":"S12"},{"topRef":"S2","botRef":"BYE"},{"topRef":"S6","botRef":"S10"},{"topRef":"S3","botRef":"BYE"},{"topRef":"S7","botRef":"S11"}],"third":{"top":null,"bot":null,"name":"XD-3rd place","court":"A3","time":"16:48","sets":[[null,null]],"umpire":"","line1":"","line2":""}},"koRoundSets":{"R16":1,"QF":1,"SF":1,"F":3}},"women":{"groups":[{"letter":"A","pairs":[{"id":"women-0-0","name":"Kay Sin - Priscilla"},{"id":"women-0-1","name":"Keat Yin - Lee Yu"},{"id":"women-0-2","name":"Aurkarn - Ivy Wee"},{"id":"women-0-3","name":"Bhavya - Khai Xin"}],"matches":[{"a":"women-0-0","b":"women-0-1","name":"WD-A1","time":"13:00","court":"A7","umpire":"Han Wee","line1":"Wei Loon","line2":"Xin Wei","sets":[[21,10]]},{"a":"women-0-2","b":"women-0-3","name":"WD-A2","time":"13:00","court":"A8","umpire":"Bong Eric","line1":"Sok Chin","line2":"Jia Ee","sets":[[21,10]]},{"a":"women-0-0","b":"women-0-2","name":"WD-A3","time":"13:12","court":"A7","umpire":"Tech Chye","line1":"Kelvin","line2":"Yan Zhe","sets":[[10,21]]},{"a":"women-0-1","b":"women-0-3","name":"WD-A4","time":"13:12","court":"A8","umpire":"Daniel","line1":"Sok Chin","line2":"Jia Ee","sets":[[21,10]]},{"a":"women-0-0","b":"women-0-3","name":"WD-A5","time":"13:24","court":"A7","umpire":"Wesley","line1":"Jeffrey","line2":"Zhen Sen","sets":[[21,10]]},{"a":"women-0-1","b":"women-0-2","name":"WD-A6","time":"13:24","court":"A8","umpire":"Philex","line1":"Sok Chin","line2":"Jia Ee","sets":[[10,21]]}]},{"letter":"B","pairs":[{"id":"women-1-0","name":"Sylvie - Xiao Jun"},{"id":"women-1-1","name":"Emily Tan - Yik Ru"},{"id":"women-1-2","name":"Girlene - Theodora"},{"id":"women-1-3","name":"Yu Xuan - Yi Xuan"}],"matches":[{"a":"women-1-0","b":"women-1-1","name":"WD-B1","time":"13:00","court":"A9","umpire":"Wee Chuen","line1":"Josephine","line2":"Boon Ping","sets":[[21,10]]},{"a":"women-1-2","b":"women-1-3","name":"WD-B2","time":"13:00","court":"A10","umpire":"Shiyee","line1":"Zi Harn","line2":"","sets":[[21,10]]},{"a":"women-1-0","b":"women-1-2","name":"WD-B3","time":"13:12","court":"A9","umpire":"Wee Chuen","line1":"Josephine","line2":"Boon Ping","sets":[[21,10]]},{"a":"women-1-1","b":"women-1-3","name":"WD-B4","time":"13:12","court":"A10","umpire":"Shiyee","line1":"Zi Harn","line2":"","sets":[[21,10]]},{"a":"women-1-0","b":"women-1-3","name":"WD-B5","time":"13:24","court":"A9","umpire":"Wee Chuen","line1":"Josephine","line2":"Boon Ping","sets":[[21,10]]},{"a":"women-1-1","b":"women-1-2","name":"WD-B6","time":"13:24","court":"A10","umpire":"Shiyee","line1":"Zi Harn","line2":"","sets":[[21,10]]}]}],"knockout":{"size":4,"rounds":[[{"top":{"id":"women-0-0","name":"Kay Sin - Priscilla","ref":"A2"},"bot":{"id":"women-1-0","name":"Sylvie - Xiao Jun","ref":"B1"},"name":"WD-Semifinal","court":"A2","sets":[[null,null]],"time":"14:48","umpire":"","line1":"","line2":""},{"top":{"id":"women-1-1","name":"Emily Tan - Yik Ru","ref":"B2"},"bot":{"id":"women-0-2","name":"Aurkarn - Ivy Wee","ref":"A1"},"name":"WD-Semifinal","court":"A7","sets":[[null,null]],"time":"14:48","umpire":"","line1":"","line2":""}],[{"top":null,"bot":null,"name":"WD-Final","court":"A8","sets":[[null,null],[null,null],[null,null]],"time":"16:18","umpire":"","line1":"","line2":""}]],"rnames":["SF","F"],"draw":[{"topRef":"A2","botRef":"B1"},{"topRef":"B2","botRef":"A1"}],"third":{"top":null,"bot":null,"name":"WD-3rd place","court":"A7","time":"15:48","sets":[[null,null]],"umpire":"","line1":"","line2":""}},"koRoundSets":{"SF":1,"F":3}}};
 
 /* ===================== LIVE SHARING (optional) =====================
    To share LIVE, read-only results with spectators:
@@ -806,11 +822,55 @@ function labelFor(q){ const nm=(q&&q.name&&q.name.trim())?q.name:`?`; return `${
 function seedStat(r){ const p=r.played||1; return {id:r.id, name:r.name, played:r.played, wp:(r.played?r.wins/r.played:0),
   gpm:r.gameDiff/p, ppm:r.diff/p, ptpm:r.pf/p, gameDiff:r.gameDiff, diff:r.diff, pf:r.pf}; }
 function seedCmp(a,b){ return (b.wp-a.wp) || (b.gpm-a.gpm) || (b.ppm-a.ppm) || (b.ptpm-a.ptpm); }
+// best N third-place pairs across groups (wildcards) — e.g. XD takes 2 so it has 12 qualifiers like MD.
+function allThirds(catKey){
+  const cfg=CATS[catKey], perG=cfg.qualifiersPerGroup, thirds=[];
+  DB[catKey].groups.forEach(g=>{ const r=standings(g)[perG]; if(r){ const s=seedStat(r); s.group=g.letter; thirds.push(s); } });
+  thirds.sort(seedCmp);
+  return thirds;
+}
+// Current state of the 3rd-place wildcard spots. If the pairs at the cut-off are TIED, those spots are
+// NOT auto-filled by group letter — they stay empty until drawn by lot (stored in DB[cat].wcDraw).
+function wildcardState(catKey){
+  const n=CATS[catKey].thirdWildcards||0, thirds=allThirds(catKey);
+  const none={n,thirds,autoIn:thirds.slice(0,n),cluster:[],spotsToDraw:0,drawnIds:[],pending:false};
+  if(!n || thirds.length<=n) return none;
+  const cut=thirds[n-1];
+  if(seedCmp(cut,thirds[n])!==0) return none;                         // clean cut — top n auto-qualify
+  const autoIn=thirds.filter(s=>seedCmp(s,cut)<0);                    // strictly better than the tie
+  const cluster=thirds.filter(s=>seedCmp(s,cut)===0);                 // tied, must draw lots
+  const spots=n-autoIn.length;
+  const drawn=(DB[catKey].wcDraw||[]).filter(id=>cluster.some(s=>s.id===id)).slice(0,spots);
+  return {n,thirds,autoIn,cluster,spotsToDraw:spots,drawnIds:drawn,pending:drawn.length<spots};
+}
+// qualified 3rd-place wildcards = auto-qualifiers + drawn picks (may be fewer than n while a draw is pending → seeds 11/12 empty)
+function wildcardThirds(catKey){
+  if(!(CATS[catKey].thirdWildcards)) return [];
+  const st=wildcardState(catKey), out=st.autoIn.slice();
+  st.drawnIds.forEach(id=>{ const s=st.cluster.find(c=>c.id===id); if(s) out.push(s); });
+  return out;
+}
+// remaining tied pairs still waiting to be drawn (flagged ⚖ draw)
+function thirdWildcardDrawIds(catKey){
+  const st=wildcardState(catKey); if(!st.pending) return new Set();
+  const drawn=new Set(st.drawnIds);
+  return new Set(st.cluster.filter(s=>!drawn.has(s.id)).map(s=>s.id));
+}
+// record a drawn wildcard pick (by name) for the wheel
+function recordWildcardPick(catKey, name){
+  const st=wildcardState(catKey), s=st.cluster.find(c=>c.name===name); if(!s) return;
+  DB[catKey].wcDraw=(DB[catKey].wcDraw||[]).concat(s.id);
+  save();
+}
+// clear a wildcard draw so it can be re-spun (seeds 11/12 go empty again)
+function resetWildcardDraw(catKey){ DB[catKey].wcDraw=[]; save(); render(); flash("Draw cleared — spin again"); }
+function numQualifiers(catKey){ const c=CATS[catKey]; return c.groups*c.qualifiersPerGroup + (c.thirdWildcards||0); }
 function overallSeeds(catKey){
   const cfg=CATS[catKey], cat=DB[catKey], perG=cfg.qualifiersPerGroup, all=[];
   cat.groups.forEach(g=>{ const st=standings(g);
     for(let pos=0;pos<perG;pos++){ const r=st[pos]; if(!r) continue; const s=seedStat(r); s.group=g.letter; all.push(s); }
   });
+  all.push(...wildcardThirds(catKey));   // add the best third-place wildcards (XD: 2)
   all.sort(seedCmp);
   // the 4 branch anchors (seeds 1–4) must come from 4 DIFFERENT groups: take the best pair from
   // each of 4 distinct groups for the top 4, then the rest keep overall-record order.
@@ -827,10 +887,17 @@ function overallRankingAll(catKey){
   all.sort(seedCmp);
   return all;
 }
+// map each pair id -> its group + finishing position, e.g. "A1" (group A 1st), "C3" (group C 3rd)
+function groupPosMap(catKey){
+  const map={};
+  DB[catKey].groups.forEach(g=>{ standings(g).forEach((r,i)=>{ if(r) map[r.id]=g.letter+(i+1); }); });
+  return map;
+}
 // Order-of-merit table. For the seeded (MD/XD) draws: top 15 of ALL pairs, qualifiers tagged with
 // their branch, the rest marked as reserves. For WD: just the 4 qualifiers.
 function renderSeedTable(catKey){
   const branched=isSeededDraw(catKey);
+  const gp=groupPosMap(catKey);
   const box=document.createElement('div'); box.className="seedBox";
   const sg=x=>(x>=0?"+":"")+x.toFixed(1);
   const cell=s=>`<td>${(s.wp*100).toFixed(0)}%</td><td>${sg(s.gpm)}</td><td>${sg(s.ppm)}</td><td>${s.ptpm.toFixed(1)}</td>`;
@@ -839,27 +906,102 @@ function renderSeedTable(catKey){
     const seeds=overallSeeds(catKey);                       // qualifiers, in seed order
     const seedBranch={}; seeds.forEach((s,i)=>seedBranch[s.id]=((i)%4)+1);
     const qSet=new Set(seeds.map(s=>s.id));
-    const ranking=overallRankingAll(catKey), limit=Math.min(15, ranking.length);
-    const rows=ranking.slice(0,limit).map((s,i)=>{ const isQ=qSet.has(s.id), br=seedBranch[s.id];
+    const drawIds=thirdWildcardDrawIds(catKey);
+    const ws=wildcardState(catKey);
+    const need=ws.spotsToDraw-ws.drawnIds.length;
+    const rightHd = ws.pending
+      ? `<button class="btn whBtn warn">🎡 Spin to draw ${need} wildcard${need>1?"s":""}</button>`
+      : (ws.cluster.length && ws.drawnIds.length
+          ? `<span class="hdNote">🎲 Wildcards drawn by lot</span> <button class="btn redoBtn">↺ Redo draw</button>`
+          : ((CATS[catKey].thirdWildcards||0) ? `<span class="hdNote">✓ Order is clear — no draw needed</span>` : ""));
+    // show QUALIFIERS in SEED order first (so a drawn wildcard sits at its seed #11/#12, not its record rank),
+    // then the reserves by record.
+    const ranking=overallRankingAll(catKey);
+    const reserves=ranking.filter(s=>!qSet.has(s.id));
+    const ordered=seeds.concat(reserves);
+    const limit=Math.min(15, ordered.length);
+    const rows=ordered.slice(0,limit).map((s,i)=>{ const isQ=qSet.has(s.id), br=seedBranch[s.id];
+      const draw = drawIds.has(s.id) ? ' <span class="lots" title="Tied with other 3rd-place pairs for the last wildcard spot — decide by drawing lots">⚖ draw</span>' : '';
       return `<tr class="${isQ?"":"resv"}"><td class="sNo">${i+1}</td>`
         +`<td>${isQ?`<span class="sBr b${br}">B${br}</span>`:`<span class="sBr res">res</span>`}</td>`
-        +`<td class="sName">${escapeHtml(s.name||"—")}</td>`+cell(s)+`</tr>`; }).join("");
-    box.innerHTML=`<div class="seedHd">🏅 Order of merit — top ${limit} (${seeds.length} qualify · 4 branches)</div>
-      <table class="seedTbl"><thead><tr><th>#</th><th>Br</th><th>Pair</th>${headCols}</tr></thead><tbody>${rows}</tbody></table>`
+        +`<td><span class="sFrom">${gp[s.id]||"—"}</span></td>`
+        +`<td class="sName">${escapeHtml(s.name||"—")}${draw}</td>`+cell(s)+`</tr>`; }).join("");
+    box.innerHTML=`<div class="seedHd"><span>🏅 Order of merit — top ${limit} (${seeds.length}/${numQualifiers(catKey)} qualify · 4 branches)</span>${rightHd}</div>
+      <table class="seedTbl"><thead><tr><th>#</th><th>Br</th><th title="Group + finishing position">From</th><th>Pair</th>${headCols}</tr></thead><tbody>${rows}</tbody></table>`
       +`<div class="seedNote">Ranked by overall record using <b>per-match averages</b>, so a 3-pair group (2 games each) is judged on the <b>same standard</b> as a 4-pair group (3 games). Each stat divides by <b>matches played (g)</b>:
         <br>• <b>Win%</b> = matches won ÷ played × 100
         <br>• <b>G±/g</b> = (games won − games lost) ÷ played
         <br>• <b>Pt±/g</b> = (points scored − points conceded) ÷ played
         <br>• <b>Pts/g</b> = points scored ÷ played
         <br>Order: Win% → G±/g → Pt±/g → Pts/g. <b>Example:</b> a 3-0 pair in a 4-team group (G±&nbsp;+3 over 3 games = +1.0/g) ties a 2-0 pair in a 3-team group (+2 over 2 = +1.0/g) — fair.
-        <br>The <b>top 4 seeds (branch anchors) always come from 4 different groups</b> (best pair of each), then spread so seeds 1 and 2 can only meet in the Final.</div>`;
+        <br>The <b>top 4 seeds (branch anchors) always come from 4 different groups</b> (best pair of each), then spread so seeds 1 and 2 can only meet in the Final.${(CATS[catKey].thirdWildcards||0)?`<br>Besides the top 2 of each group, the <b>best ${CATS[catKey].thirdWildcards} 3rd-place pairs</b> also qualify (ranked the same way). If 3rd-place pairs <b>tie</b> for the last wildcard spot they are flagged <b>⚖ draw</b> — decide by drawing lots, not by group letter.`:""}</div>`;
+    const wb=box.querySelector('.whBtn'); if(wb) wb.onclick=()=>openWildcardDraw(catKey);
+    const rb=box.querySelector('.redoBtn'); if(rb) rb.onclick=()=>{ if(confirm("Clear the current wildcard draw and spin again?")) resetWildcardDraw(catKey); };
   } else {
     const seeds=overallSeeds(catKey), n=seeds.length;
-    const rows=seeds.map((s,i)=>`<tr><td class="sNo">${i+1}</td><td class="sName">${escapeHtml(s.name||"—")}</td>`+cell(s)+`</tr>`).join("");
+    const rows=seeds.map((s,i)=>`<tr><td class="sNo">${i+1}</td><td><span class="sFrom">${gp[s.id]||"—"}</span></td><td class="sName">${escapeHtml(s.name||"—")}</td>`+cell(s)+`</tr>`).join("");
     box.innerHTML=`<div class="seedHd">🏅 Seeding order — by overall record (1–${n})</div>
-      <table class="seedTbl"><thead><tr><th>#</th><th>Pair</th>${headCols}</tr></thead><tbody>${rows}</tbody></table>`;
+      <table class="seedTbl"><thead><tr><th>#</th><th title="Group + finishing position">From</th><th>Pair</th>${headCols}</tr></thead><tbody>${rows}</tbody></table>`;
   }
   return box;
+}
+// Spin-the-wheel to resolve a tie by lot. Spins pick one at a time; each winner is REMOVED and onPick()
+// is called. onPick may return the next list of names (to keep drawing) or false/empty (draw complete).
+function openWheel(names, title, onPick){
+  names=(names||[]).filter(Boolean);
+  if(names.length<1){ alert("Nothing to draw."); return; }
+  const old=document.getElementById('wheelModal'); if(old) old.remove();
+  const ov=document.createElement('div'); ov.id="wheelModal"; ov.className="pwOverlay";
+  ov.innerHTML=`<div class="pwBox wheelBox">
+    <div class="pwTitle">🎡 ${escapeHtml(title||"Draw lots")}</div>
+    <div class="wheelWrap"><div class="wheelPin">▼</div><canvas id="wheelCv" width="300" height="300"></canvas></div>
+    <div class="wheelRes" id="wheelRes">Spin to draw…</div>
+    <div class="pwBtns"><button class="btn pwOk" id="spinBtn">🎲 Spin</button><button class="btn" id="wheelClose">Close</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  const cv=ov.querySelector('#wheelCv'), ctx=cv.getContext('2d'), R=148, cx=150, cy=150;
+  const colors=["#60a5fa","#f87171","#34d399","#fbbf24","#a78bfa","#f472b6","#22d3ee","#fb923c","#a3e635","#f9a8d4","#93c5fd","#fda4af"];
+  const spinBtn=ov.querySelector('#spinBtn'), resEl=ov.querySelector('#wheelRes');
+  let current=names.slice(), rot=0, spinning=false;
+  function draw(){ const n=current.length, seg2=2*Math.PI/Math.max(n,1); ctx.clearRect(0,0,300,300);
+    for(let i=0;i<n;i++){ const a0=i*seg2 - Math.PI/2, a1=(i+1)*seg2 - Math.PI/2;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,a0,a1); ctx.closePath(); ctx.fillStyle=colors[i%colors.length]; ctx.fill();
+      ctx.strokeStyle="#fff"; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate((a0+a1)/2); ctx.textAlign="right"; ctx.fillStyle="#0f172a"; ctx.font="bold 11px 'Inter',sans-serif";
+      const nm=current[i].length>18?current[i].slice(0,17)+"…":current[i]; ctx.fillText(nm, R-10, 4); ctx.restore();
+    }
+    ctx.beginPath();ctx.arc(cx,cy,20,0,2*Math.PI);ctx.fillStyle="#fff";ctx.fill();ctx.strokeStyle="#334155";ctx.lineWidth=2;ctx.stroke();
+  }
+  draw();
+  spinBtn.onclick=()=>{ if(spinning||!current.length)return; spinning=true;
+    const n=current.length, seg=360/n, win=Math.floor(Math.random()*n);
+    rot = 360*6 + (360 - ((win+0.5)*seg));
+    cv.style.transition="transform 4.2s cubic-bezier(.12,.72,.15,1)"; cv.style.transform=`rotate(${rot}deg)`;
+    resEl.textContent="Spinning…";
+    setTimeout(()=>{ spinning=false; const picked=current[win]; resEl.innerHTML="🏆 Drawn: <b>"+escapeHtml(picked)+"</b>";
+      let next=null; if(onPick) next=onPick(picked);
+      if(onPick && (next===false || !next || !next.length)){ spinBtn.disabled=true; spinBtn.textContent="✓ Done"; }
+      else if(onPick){ current=next.slice();
+        setTimeout(()=>{ cv.style.transition="none"; cv.style.transform="rotate(0deg)"; rot=0; draw(); resEl.innerHTML="🏆 <b>"+escapeHtml(picked)+"</b> drawn — spin for the next"; }, 1300);
+      } else { current.splice(win,1); if(current.length){ setTimeout(()=>{ cv.style.transition="none"; cv.style.transform="rotate(0deg)"; rot=0; draw(); }, 1300); } else { spinBtn.disabled=true; spinBtn.textContent="✓ Done"; } }
+    }, 4300);
+  };
+  const close=()=>ov.remove();
+  ov.querySelector('#wheelClose').onclick=close;
+  ov.onclick=e=>{ if(e.target===ov) close(); };
+}
+// Open the wildcard draw: spin to fill the tied 3rd-place spots one at a time (each pick is removed).
+function openWildcardDraw(catKey){
+  const st=wildcardState(catKey);
+  if(!st.pending){ alert("No draw needed — the order is already clear."); return; }
+  const remaining=()=>{ const dr=new Set(wildcardState(catKey).drawnIds); return wildcardState(catKey).cluster.filter(s=>!dr.has(s.id)).map(s=>s.name); };
+  const need=st.spotsToDraw-st.drawnIds.length;
+  openWheel(remaining(), `Draw ${need} of ${st.cluster.length} tied 3rd-place pairs`, (name)=>{
+    recordWildcardPick(catKey, name);
+    const s2=wildcardState(catKey);
+    render();                              // update seeds 11/12 live
+    return s2.pending ? remaining() : false;
+  });
 }
 
 /* ===================== KNOCKOUT ===================== */
@@ -877,7 +1019,7 @@ function roundNames(size){
   return ["F"];
 }
 function firstRoundSize(catKey){
-  const q = CATS[catKey].groups * CATS[catKey].qualifiersPerGroup;
+  const q = numQualifiers(catKey);
   if(q<=4) return 4; if(q<=8) return 8; return 16;
 }
 
@@ -1016,9 +1158,54 @@ function refreshAllKnockouts(){
   // Only auto-seed a category's knockout once its group stage has real results — seeding from all-tied
   // (empty) standings produces a degenerate bracket with duplicate pairs / false clashes.
   for(const k in CATS){ if(DB[k] && DB[k].knockout && catHasGroupResults(k)){ buildKnockout(k, false); propagate(k); } }
+  assignKnockoutOfficials();
+}
+// Auto-assign a KNOCKOUT match's umpire from an eliminated player who has no further matches:
+// a pair that LOSES an earlier round (except semifinal losers, who still play the 3rd-place match)
+// becomes free and is used as umpire for later rounds. Only fills EMPTY umpire slots (manual picks kept).
+// Deterministic (same results -> same umpires on every device), so it needs no save.
+function assignKnockoutOfficials(){
+  // match duration (minutes): best-of-3 finals run long; 3rd place is 1 game; group ~15.
+  const koDur=(k,rname)=> (rname!=="3RD" && koSetsFor(k,rname)===3) ? 42 : 18;
+  // 1) drop prior auto picks
+  for(const k in CATS){ const ko=DB[k]&&DB[k].knockout; if(!ko) continue;
+    [...ko.rounds.flat(), ...(ko.third?[ko.third]:[])].forEach(t=>{ if(t._offAuto){ t._offAuto.forEach(f=>t[f]=""); t._offAuto=null; } });
+  }
+  // 2) busy INTERVALS per person — playing (all cats) + any MANUAL officials. Intervals use real durations
+  //    so nobody is given an officiating slot that overlaps a match they play OR already officiate.
+  const busy={};
+  const addBusy=(name,s,e)=>{ name=(name||'').trim(); if(name&&s!=null) (busy[name]=busy[name]||[]).push([s,e]); };
+  const free=(name,s,e)=>{ return !(busy[name]||[]).some(([a,b])=>a<e && s<b); };     // no overlap
+  for(const k in CATS){ const cat=DB[k]; if(!cat) continue;
+    (cat.groups||[]).forEach(g=>(g.matches||[]).forEach(m=>{ if(!m.time)return; const s=parseTime(m.time), e=s+15;
+      [g.pairs.find(p=>p.id===m.a),g.pairs.find(p=>p.id===m.b)].forEach(pr=>{ if(pr) splitPair(pr.name).forEach(n=>addBusy(n,s,e)); });
+      [m.umpire,m.line1,m.line2].forEach(x=>addBusy(x,s,e)); }));
+    const ko=cat.knockout; if(ko){
+      const put=(t,rname)=>{ if(!t||!t.time)return; const s=parseTime(t.time), e=s+koDur(k,rname);
+        [t.top,t.bot].forEach(sd=>{ if(sd&&!sd.bye&&sd.name) splitPair(sd.name).forEach(n=>addBusy(n,s,e)); });
+        [t.umpire,t.line1,t.line2].forEach(x=>addBusy(x,s,e)); };                      // keep manual officials busy
+      ko.rounds.forEach((r,ri)=>r.forEach(t=>put(t, ko.rnames[ri]))); if(ko.third) put(ko.third,"3RD");
+    }
+  }
+  const everyone=Object.keys(busy);
+  // knockout losers (any category) — preferred as officials over group-only players
+  const koLosers=new Set();
+  for(const k in CATS){ const ko=DB[k]&&DB[k].knockout; if(!ko) continue;
+    ko.rounds.forEach(r=>r.forEach(t=>{ const l=tieLoser(t); if(l&&!l.bye&&l.name) splitPair(l.name).forEach(p=>koLosers.add(p)); })); }
+  // 3) staff each knockout match (earliest first) with a crew (umpire + 2 lines) of people free that whole slot
+  const allTies=[];
+  for(const k in CATS){ const ko=DB[k]&&DB[k].knockout; if(!ko) continue; ko.rounds.forEach((r,ri)=>r.forEach(t=>allTies.push({t,k,rname:ko.rnames[ri]}))); if(ko.third) allTies.push({t:ko.third,k,rname:"3RD"}); }
+  allTies.filter(o=>o.t.time).sort((a,b)=>(parseTime(a.t.time)||0)-(parseTime(b.t.time)||0)).forEach(({t,k,rname})=>{
+    if(!bothReal(t)) return;
+    const s=parseTime(t.time), e=s+koDur(k,rname);
+    ["umpire","line1","line2"].forEach(field=>{ if((t[field]||'').trim()) return;   // keep manual, fill empties
+      const ok=p=>free(p,s,e);
+      const cand = everyone.find(p=>koLosers.has(p)&&ok(p)) || everyone.find(ok);
+      if(cand){ t[field]=cand; (t._offAuto=t._offAuto||[]).push(field); addBusy(cand,s,e); } });   // now busy for this match
+  });
 }
 // "Hide match info" toggle for the bracket boxes (per-device, remembered)
-function koHdrHidden(){ try{ const v=localStorage.getItem("amd_hideKoHdr"); return v===null ? true : v==="1"; }catch(e){ return true; } }   // default HIDDEN so SF→Final connectors sit between the pairs
+function koHdrHidden(){ try{ return localStorage.getItem("amd_hideKoHdr")==="1"; }catch(e){ return false; } }   // default SHOWN (connectors handled by --koOff + aligned final box)
 function setKoHdrHidden(v){ try{ localStorage.setItem("amd_hideKoHdr", v?"1":"0"); }catch(e){} document.body.classList.toggle('hideKoHdr', !!v); render(); }
 // One-time manual re-base: slide only the UPCOMING (unplayed) matches so the next one starts at the
 // current clock time. Matches that already have a score keep their recorded times (history preserved).
@@ -1110,10 +1297,12 @@ function render(){
   if(currentCat==="attendance"){ renderAttendance(v); return; }
   if(currentCat==="courts"){ renderCourts(v); return; }
   const cfg=CATS[currentCat], cat=DB[currentCat];
-  const q=cfg.groups*cfg.qualifiersPerGroup;
+  const q=numQualifiers(currentCat);
+  const wc=cfg.thirdWildcards||0;
+  const advTxt = `top ${cfg.qualifiersPerGroup} advance` + (wc?` + best ${wc} 3rd-place`:"");
   const head=document.createElement('div');
   head.innerHTML=`<div class="catTitle">${cfg.name}</div>
-    <div class="catMeta">${cfg.groups} groups · top ${cfg.qualifiersPerGroup} advance · ${q} qualifiers → ${roundNames(firstRoundSize(currentCat)).join(" → ")}</div>`;
+    <div class="catMeta">${cfg.groups} groups · ${advTxt} · ${q} qualifiers → ${roundNames(firstRoundSize(currentCat)).join(" → ")}</div>`;
   v.appendChild(head);
 
   // GROUPS
@@ -1137,7 +1326,7 @@ function render(){
       <code>4</code> head-to-head (winner of the direct match) →
       <code>5</code> total points scored (Pts+) →
       <code>6</code> drawing lots by the tied pairs themselves <span style="color:var(--gold)">⚖</span>.
-      Top ${CATS[currentCat].qualifiersPerGroup} of each group advance (shown with ✓).
+      Top ${CATS[currentCat].qualifiersPerGroup} of each group advance${(CATS[currentCat].thirdWildcards||0)?`, plus the best ${CATS[currentCat].thirdWildcards} 3rd-place pairs across all groups`:""} (shown with ✓).
       <br><span style="color:var(--muted)">If head-to-head forms a loop (e.g. <b>A beats B, B beats C, C beats A</b>), it can't separate the tied pairs — ranking continues to step 5 (total points), and if they're still exactly equal the tied pairs <b>draw lots among themselves</b> (flagged <span style="color:var(--gold)">⚖</span>).</span>
     </div>`;
   v.appendChild(legend);
@@ -1178,6 +1367,8 @@ function render(){
     p.innerHTML=`Knockout not seeded yet. Fill group results, then click <b>“Re-seed knockout from standings”</b> above.`;
     v.appendChild(p);
   } else {
+    if(catHasGroupResults(currentCat)){ buildKnockout(currentCat,false); propagate(currentCat); }  // reflect latest seeds (e.g. wildcard draw fills #11/#12)
+    assignKnockoutOfficials();              // keep umpires (eliminated players) current on the bracket tab
     v.appendChild(renderBracket(currentCat));
   }
   // read-only view: lock every input so spectators can look but not change anything
@@ -1337,10 +1528,14 @@ function renderCourts(v){
   // Flag empty courts from the first knockout slot onward as open for a friendly match.
   // (Round-robin idle slots are NOT flagged — they may still be used for pulled matches.)
   const koStart=parseTime("14:48");
-  const tbody=times.map(t=>{ const tm=parseTime(t); const spare=(tm!=null&&tm>=koStart);
+  const tbody=times.map(t=>{ const tm=parseTime(t);
+    const spare=(tm!=null&&tm>=koStart);                       // knockout stage (14:48+): genuinely free
+    const rr=(tm!=null&&tm<koStart);                           // round-robin stage: may still be used / may shift earlier
+    const emptyLabel = spare ? '<div class="ctFree">🏸 Free — ready for friendly play</div>'
+                      : (rr ? '<div class="ctHold">🔄 Round-robin — may move earlier</div>' : '');
     return `<tr><td class="ctTimeH">${escapeHtml(t)}</td>`
     +courts.map(c=>{ const cell=cellAt[t+"|"+c];
-        if(!cell) return `<td class="ctCell st-empty">${spare?'<div class="ctFree">🏸 Free — ready for friendly play</div>':''}</td>`;
+        if(!cell) return `<td class="ctCell st-empty">${emptyLabel}</td>`;
         const ci=cellInfo(cell); return `<td class="ctCell cat-${ci.cat} st-${ci.cls}">${ci.html}</td>`; }).join("")
     +`</tr>`; }).join("");
   const wrap=document.createElement('div'); wrap.className="ctGridWrap";
@@ -1558,15 +1753,19 @@ function renderActResults(container, query){
 
 /* ---- match details: compact summary + titled popup editor ---- */
 function detailsSummary(o){
-  const parts=[];
-  if(o.name) parts.push('<b>'+escapeHtml(o.name)+'</b>');
-  if(o.time) parts.push('🕐 '+escapeHtml(o.time));
-  if(o.court) parts.push('📍 '+escapeHtml(o.court));
+  const sep=' <span class="dot">·</span> ';
+  const main=[];
+  if(o.name) main.push('<b>'+escapeHtml(o.name)+'</b>');
+  if(o.time) main.push('🕐 '+escapeHtml(o.time));
+  if(o.court) main.push('📍 '+escapeHtml(o.court));
   const ump=(o.umpire||'').trim();
   const lines=[o.line1,o.line2].map(x=>(x||'').trim()).filter(Boolean);
-  if(ump)         parts.push('🧑‍⚖️ '+escapeHtml(ump));
-  if(lines.length)parts.push('🚩 '+escapeHtml(lines.join(', ')));
-  return parts.length ? parts.join(' <span class="dot">·</span> ') : '<span class="muted">No details set yet</span>';
+  const off=[];
+  if(ump)         off.push('🧑‍⚖️ '+escapeHtml(ump));
+  if(lines.length)off.push('🚩 '+escapeHtml(lines.join(', ')));
+  if(!main.length && !off.length) return '';   // nothing assigned yet -> empty (no placeholder)
+  // line 1 = match · time · court ; officials (line 2) get their own span so the koHdr can wrap them
+  return main.join(sep) + (off.length ? '<span class="offLine">'+off.join(sep)+'</span>' : '');
 }
 function detailsHeader(obj, title){
   const hdr=document.createElement('div'); hdr.className="matchHdr";
@@ -1598,6 +1797,7 @@ function renderGroup(g,gi){
   const st=standings(g);
   const perG=CATS[currentCat].qualifiersPerGroup;
   const qSet=new Set(st.slice(0,perG).map(r=>r.id));
+  wildcardThirds(currentCat).forEach(s=>qSet.add(s.id));   // best 3rd-place wildcards also advance (XD)
 
   // header + pair name editors
   let html=`<h3><span class="gx">Group ${g.letter}</span> <span class="note" style="margin:0">${g.pairs.length} pairs</span></h3>`;
@@ -1916,6 +2116,8 @@ function renderTie(catKey,ri,ti,tie,isFinal){
             tie.sets[s][oppIdx]=21; save(true);
           }
           propagate(catKey);
+          assignKnockoutOfficials(catKey);   // eliminated players become umpires for later rounds
+          save(true);
           rerenderBracket(catKey);
         };
         sb.appendChild(inp);
