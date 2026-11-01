@@ -1124,17 +1124,18 @@ function qRefTeam(catKey, ref){
 //   Branch 1 = seeds 1,5,9 ; Branch 2 = 2,6,10 ; Branch 3 = 3,7,11 ; Branch 4 = 4,8,12.
 //   In each branch the two lower seeds play R16, the branch's top seed OVERCOMES (byes) into the QF.
 //   (For XD only 10 seeds exist, so S11/S12 resolve to byes -> branches 3 & 4 go straight to QF.)
-//   R16 ties are arranged so the app's fixed propagation yields: QF0=B1, QF1=B4, QF2=B2, QF3=B3,
-//   SF0 = B1 v B4 (left), SF1 = B2 v B3 (right) -> seeds 1 and 2 can only meet in the Final.
+//   R16 ties are arranged so the app's fixed propagation yields: QF0=B1, QF1=B3, QF2=B2, QF3=B4,
+//   SF0 = B1 v B3 (LEFT), SF1 = B2 v B4 (RIGHT) -> the LEFT half holds seeds 1,5,9 and 3,7,11,
+//   the RIGHT half holds 2,6,10 and 4,8,12; seeds 1 and 2 are in opposite halves (meet only in the Final).
 const BRANCH16 = [
-  {topRef:"S1", botRef:"BYE"},   // Branch 1 top -> QF0 top
+  {topRef:"S1", botRef:"BYE"},   // Branch 1 top -> QF0 top  (LEFT)
   {topRef:"S5", botRef:"S9"},    // Branch 1 R16  -> QF0 bot
-  {topRef:"S4", botRef:"BYE"},   // Branch 4 top -> QF1 top
-  {topRef:"S8", botRef:"S12"},   // Branch 4 R16  -> QF1 bot
-  {topRef:"S2", botRef:"BYE"},   // Branch 2 top -> QF2 top
+  {topRef:"S3", botRef:"BYE"},   // Branch 3 top -> QF1 top  (LEFT)
+  {topRef:"S7", botRef:"S11"},   // Branch 3 R16  -> QF1 bot
+  {topRef:"S2", botRef:"BYE"},   // Branch 2 top -> QF2 top  (RIGHT)
   {topRef:"S6", botRef:"S10"},   // Branch 2 R16  -> QF2 bot
-  {topRef:"S3", botRef:"BYE"},   // Branch 3 top -> QF3 top
-  {topRef:"S7", botRef:"S11"}    // Branch 3 R16  -> QF3 bot
+  {topRef:"S4", botRef:"BYE"},   // Branch 4 top -> QF3 top  (RIGHT)
+  {topRef:"S8", botRef:"S12"}    // Branch 4 R16  -> QF3 bot
 ];
 const CUSTOM_DRAWS = {
   mixed: BRANCH16.map(d=>({topRef:d.topRef,botRef:d.botRef})),
@@ -1187,6 +1188,7 @@ function buildKnockout(catKey, reseed){
     cat.knockout={size,rounds,rnames,draw:defaultDraw(catKey)};
   }
   if(!cat.knockout.draw) cat.knockout.draw=defaultDraw(catKey);   // migrate older saves
+  else if(isSeededDraw(catKey)) cat.knockout.draw=defaultDraw(catKey);   // seeded draws (MD/XD) always follow the current BRANCH16 branch layout
   // keep every tie's games count in sync with its round's chosen format (preserves scores)
   cat.knockout.rounds.forEach((rd,ri)=>rd.forEach(t=>{ t.sets=normSets(t.sets, koSetsFor(catKey, cat.knockout.rnames[ri])); }));
   // 3rd/4th place playoff (losers of the two semifinals) — single game
